@@ -8,7 +8,6 @@ import { FileItem } from '../../core/models/file-item.model';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './file-explorer.component.html',
-  styleUrls: ['./file-explorer.component.css']
 })
 export class FileExplorerComponent {
   @Input() view: 'details' | 'list' | 'icons' = 'details';
