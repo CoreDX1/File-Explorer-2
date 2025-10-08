@@ -5,7 +5,6 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Interfaces;
 
-
 public class FolderServices : IFolderServices
 {
     private readonly IFolderRepository _folderRepository;
@@ -30,7 +29,6 @@ public class FolderServices : IFolderServices
         var file = _folderRepository.ReadFile(filePath);
 
         return Result.Success(file, "El archivo fue leido correctamente.");
-
     }
 
     public Result<string> CreateFolder(string path)
