@@ -7,7 +7,10 @@ public class FileRepository : IFileRepository
 {
     public List<FileItem> GetFilesAsync(string path)
     {
-        string fullPath = Path.Combine("/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR", path);
+        string fullPath = Path.Combine(
+            "/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR",
+            path
+        );
 
         if (!Directory.Exists(fullPath))
             throw new ArgumentException("El directorio no existe.");
@@ -17,13 +20,15 @@ public class FileRepository : IFileRepository
         foreach (var file in Directory.GetFiles(fullPath))
         {
             var fileInfo = new FileInfo(file);
-            files.Add(new FileItem(
-                name: Path.GetFileName(file),
-                path: file,
-                size: fileInfo.Length,
-                createdAt: fileInfo.CreationTime,
-                modifiedAt: fileInfo.LastWriteTime
-            ));
+            files.Add(
+                new FileItem(
+                    name: Path.GetFileName(file),
+                    path: file,
+                    size: fileInfo.Length,
+                    createdAt: fileInfo.CreationTime,
+                    modifiedAt: fileInfo.LastWriteTime
+                )
+            );
         }
 
         return files;

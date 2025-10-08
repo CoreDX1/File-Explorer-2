@@ -6,7 +6,6 @@ namespace Infrastructure.Repositories;
 
 public class FolderRepository : IFolderRepository
 {
-
     private string FullPath = "/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR";
 
     public List<DirectoryItem> GetSubFolders(string path)
@@ -20,13 +19,15 @@ public class FolderRepository : IFolderRepository
 
         foreach (var dir in Directory.GetDirectories(fullPath))
         {
-            subFolders.Add(new DirectoryItem(
-                name: Path.GetFileName(dir),
-                path: dir,
-                size: new DirectoryInfo(dir).EnumerateFiles().Sum(file => file.Length),
-                createdAt: new FileInfo(dir).CreationTime,
-                modifiedAt: new FileInfo(dir).LastWriteTime
-            ));
+            subFolders.Add(
+                new DirectoryItem(
+                    name: Path.GetFileName(dir),
+                    path: dir,
+                    size: new DirectoryInfo(dir).EnumerateFiles().Sum(file => file.Length),
+                    createdAt: new FileInfo(dir).CreationTime,
+                    modifiedAt: new FileInfo(dir).LastWriteTime
+                )
+            );
         }
 
         return subFolders;
@@ -44,13 +45,15 @@ public class FolderRepository : IFolderRepository
         foreach (var file in Directory.GetFiles(fullPath))
         {
             var fileInfo = new FileInfo(file);
-            files.Add(new FileItem(
-                name: Path.GetFileName(file),
-                path: file,
-                size: fileInfo.Length,
-                createdAt: fileInfo.CreationTime,
-                modifiedAt: fileInfo.LastWriteTime
-            ));
+            files.Add(
+                new FileItem(
+                    name: Path.GetFileName(file),
+                    path: file,
+                    size: fileInfo.Length,
+                    createdAt: fileInfo.CreationTime,
+                    modifiedAt: fileInfo.LastWriteTime
+                )
+            );
         }
 
         return files;
@@ -88,7 +91,6 @@ public class FolderRepository : IFolderRepository
 
         Directory.Delete(fullPath, true);
         return true;
-
     }
 
     public bool CreateFolder(string path)
