@@ -1,23 +1,20 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FileItem } from '../interface/FileItem';
+import { FileItem } from '../../core/models/file-item.model';
 
 @Component({
-  selector: 'app-file-explorer',
+  selector: 'app-file-explorer-page',
+  templateUrl: './file-explorer-page.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './file-explorer.component.html',
-  styleUrls: ['./file-explorer.component.css']
+  imports: [CommonModule, FormsModule]
 })
-export class FileExplorerComponent {
-  @Input() view: 'details' | 'list' | 'icons' = 'details';
-  @Output() pathChanged = new EventEmitter<string>();
-  @Output() selectionChanged = new EventEmitter<number>();
+export class FileExplorerPageComponent {
+  view: 'details' | 'list' | 'icons' = 'details';
   selectedItems: FileItem[] = [];
   currentPath: string = 'C:\\Users\\User\\Documents';
+  activeTab: 'home' | 'share' | 'view' = 'home';
 
-  // In a real app, this would likely come from a service
   files: FileItem[] = [
     { id: 1, name: 'Project Files', type: 'folder', dateModified: '2023-06-15', size: '-' },
     { id: 2, name: 'Report.pdf', type: 'file', dateModified: '2023-06-10', size: '2.4 MB' },
@@ -33,19 +30,13 @@ export class FileExplorerComponent {
     { id: 12, name: 'Archive', type: 'folder', dateModified: '2023-06-09', size: '-' },
   ];
 
-  constructor() { 
-    // Emit initial path
-    this.pathChanged.emit(this.currentPath);
-  }
-
   handleSelectItem(item: FileItem): void {
     const index = this.selectedItems.findIndex(i => i.id === item.id);
     if (index > -1) {
-      this.selectedItems.splice(index, 1); // Deselect
+      this.selectedItems.splice(index, 1);
     } else {
-      this.selectedItems.push(item); // Select
+      this.selectedItems.push(item);
     }
-    this.selectionChanged.emit(this.selectedItems.length);
   }
 
   isSelected(item: FileItem): boolean {
@@ -54,18 +45,20 @@ export class FileExplorerComponent {
 
   handleDoubleClickItem(item: FileItem): void {
     if (item.type === 'folder') {
-      this.currentPath = `${this.currentPath}\${item.name}`;
-      this.pathChanged.emit(this.currentPath);
-      // In a real app, you would fetch new files for this path
-      this.selectedItems = []; // Clear selection when navigating
+      this.currentPath = `${this.currentPath}\\${item.name}`;
+      this.selectedItems = [];
     }
-    // else if (item.type === 'file') {
-    //   // Potentially open the file
-    // }
   }
 
   fileById(index: number, item: FileItem): number {
     return item.id;
   }
 
+  setActiveTab(tab: 'home' | 'share' | 'view'): void {
+    this.activeTab = tab;
+  }
+
+  setView(newView: 'details' | 'list' | 'icons'): void {
+    this.view = newView;
+  }
 }

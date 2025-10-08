@@ -165,7 +165,7 @@
           <div class="grid grid-cols-1 gap-2">
             <div
               *ngFor="let file of files; trackBy: fileById"
-              class="flex items-center p-2 rounded cursor-pointer hover:bg-blue-50 transition-colors duration-150"
+              class="flex items-center p-2 rounded cursor-pointer hover:bg-blue-50 transition-colors duración-150"
               [ngClass]="{'bg-blue-100': isSelected(file)}"
               (click)="handleSelectItem(file)"
               (dblclick)="handleDoubleClickItem(file)"

@@ -1,19 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FileItem } from '../interface/FileItem';
+import { FileItem } from '../../core/models/file-item.model';
 
 @Component({
-  selector: 'app-file-explorer-page',
-  templateUrl: './file-explorer-page.component.html',
+  selector: 'app-file-explorer',
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule],
+  templateUrl: './file-explorer.component.html',
+  styleUrls: ['./file-explorer.component.css']
 })
-export class FileExplorerPageComponent {
-  view: 'details' | 'list' | 'icons' = 'details';
+export class FileExplorerComponent {
+  @Input() view: 'details' | 'list' | 'icons' = 'details';
+  @Output() pathChanged = new EventEmitter<string>();
+  @Output() selectionChanged = new EventEmitter<number>();
   selectedItems: FileItem[] = [];
   currentPath: string = 'C:\\Users\\User\\Documents';
-  activeTab: 'home' | 'share' | 'view' = 'home';
 
   files: FileItem[] = [
     { id: 1, name: 'Project Files', type: 'folder', dateModified: '2023-06-15', size: '-' },
@@ -30,6 +32,10 @@ export class FileExplorerPageComponent {
     { id: 12, name: 'Archive', type: 'folder', dateModified: '2023-06-09', size: '-' },
   ];
 
+  constructor() {
+    this.pathChanged.emit(this.currentPath);
+  }
+
   handleSelectItem(item: FileItem): void {
     const index = this.selectedItems.findIndex(i => i.id === item.id);
     if (index > -1) {
@@ -37,6 +43,7 @@ export class FileExplorerPageComponent {
     } else {
       this.selectedItems.push(item);
     }
+    this.selectionChanged.emit(this.selectedItems.length);
   }
 
   isSelected(item: FileItem): boolean {
@@ -46,19 +53,12 @@ export class FileExplorerPageComponent {
   handleDoubleClickItem(item: FileItem): void {
     if (item.type === 'folder') {
       this.currentPath = `${this.currentPath}\\${item.name}`;
+      this.pathChanged.emit(this.currentPath);
       this.selectedItems = [];
     }
   }
 
   fileById(index: number, item: FileItem): number {
     return item.id;
-  }
-
-  setActiveTab(tab: 'home' | 'share' | 'view'): void {
-    this.activeTab = tab;
-  }
-
-  setView(newView: 'details' | 'list' | 'icons'): void {
-    this.view = newView;
   }
 }

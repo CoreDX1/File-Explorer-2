@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -13,12 +13,12 @@ export class LoginComponent {
   email: string = '';
   password: string = '';
 
-  constructor(private auth: AuthService, private router: Router){}
+  constructor(private auth: AuthService, private router: Router) {}
 
   onLogin() {
     console.log('Email:', this.email, 'Password:', this.password);
 
-    if(this.email && this.password){
+    if (this.email && this.password) {
       this.auth.login('fake-login');
       this.router.navigate(['/explorer']);
     }
