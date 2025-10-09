@@ -1,13 +1,23 @@
 using Domain.Interfaces;
+using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure;
 
 public static class DependencyInjection
 {
-    public static void AddInfrastructureServices(this IServiceCollection services)
+    public static void AddInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
+        services.AddDbContext<FileExplorerDbContext>(options =>
+        {
+            options.UseSqlite(configuration.GetConnectionString("DefaultConection"));
+        });
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IFolderRepository, FolderRepository>();
     }
