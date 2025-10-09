@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 
 // Add application and infrastructure services
 builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(configuration);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
@@ -36,11 +36,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();                // ← Habilita Swagger JSON
+    app.UseSwagger(); // ← Habilita Swagger JSON
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "MoviesDB API V1");
-        c.RoutePrefix = string.Empty;  // Acceso desde http://localhost:5000/
+        c.RoutePrefix = string.Empty; // Acceso desde http://localhost:5000/
     });
 }
 
