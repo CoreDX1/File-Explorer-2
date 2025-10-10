@@ -1,6 +1,6 @@
 namespace Application.Services;
 
-using Application.Services.Interfaces;
+using Application.Interface;
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Interfaces;
