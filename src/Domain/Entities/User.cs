@@ -1,6 +1,8 @@
+using TrackableEntities.Common.Core;
+
 namespace Domain.Entities;
 
-public class User
+public class User : Entity
 {
     public int Id { get; set; }
     public string Username { get; set; } = string.Empty;
