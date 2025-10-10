@@ -1,3 +1,4 @@
+using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Interface;
 using Microsoft.EntityFrameworkCore;
