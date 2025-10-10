@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TrackableEntities.EF.Core" Version="9.0.1" />
+  </ItemGroup>
+
 </Project>
