@@ -1,6 +1,8 @@
+using System.Linq;
 using Application.Interface;
 using Domain.Entities;
 using Infrastructure.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
@@ -8,16 +10,19 @@ public class UserServices : Service<User>, IUserServices
 {
     private readonly IRepositoryAsync<User> _repository;
 
-    protected UserServices(IRepositoryAsync<User> repository)
-        : base(repository) { }
-
-    public Task<List<User>> GetAllUsers()
+    public UserServices(IRepositoryAsync<User> repository)
+        : base(repository)
     {
-        throw new NotImplementedException();
+        _repository = repository;
     }
 
-    public Task<User> GetUserByEmail(string email)
+    public async Task<List<User>> GetAllUsers()
     {
-        throw new NotImplementedException();
+        return await Queryable().ToListAsync();
+    }
+
+    public async Task<User> GetUserByEmail(string email)
+    {
+        return await Queryable().FirstOrDefaultAsync(u => u.Email == email);
     }
 }
