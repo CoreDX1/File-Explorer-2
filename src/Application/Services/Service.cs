@@ -1,4 +1,5 @@
 using Application.Interface;
+using Domain.Entities;
 using Infrastructure.Interface;
 using Infrastructure.Repositories;
 using TrackableEntities.Common.Core;
