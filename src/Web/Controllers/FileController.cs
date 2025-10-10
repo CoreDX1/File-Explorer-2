@@ -1,4 +1,4 @@
-using Application.Services.Interfaces;
+using Application.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers;

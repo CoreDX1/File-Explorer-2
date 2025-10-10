@@ -1,6 +1,6 @@
 namespace Web.Controllers;
 
-using Application.Services.Interfaces;
+using Application.Interface;
 using Ardalis.Result;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;

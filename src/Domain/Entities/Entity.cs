@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using TrackableEntities.Common.Core;
 
-namespace Infrastructure.Repositories;
+namespace Domain.Entities;
 
 public abstract class Entity : ITrackable
 {
