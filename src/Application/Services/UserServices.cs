@@ -1,4 +1,3 @@
-using System.Linq;
 using Application.Interface;
 using Domain.Entities;
 using Infrastructure.Interface;
