@@ -1,5 +1,6 @@
 using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Interface;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,12 @@ public static class DependencyInjection
         {
             options.UseSqlite(configuration.GetConnectionString("DefaultConection"));
         });
+
+        // Unit of Work registration
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUnitOfWorkAsync, UnitOfWork>();
+
+        // Repository registration (optional if using Unit of Work)
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IFolderRepository, FolderRepository>();
     }
