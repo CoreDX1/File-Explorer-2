@@ -1,5 +1,3 @@
-using TrackableEntities.Common.Core;
-
 namespace Domain.Entities;
 
 public class User : Entity
