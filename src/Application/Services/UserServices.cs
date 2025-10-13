@@ -69,9 +69,16 @@ public class UserServices : Service<User>, IUserServices
         throw new NotImplementedException();
     }
 
-    public Task<AuthResult> CreateUserAsync(CreateUserRequest request)
+    public async Task<AuthResult> CreateUserAsync(CreateUserRequest request)
     {
-        throw new NotImplementedException();
+        var user = await GetUserByEmail(request.Email);
+        if (user != null)
+            return new AuthResult(false, "User already exists");
+
+        var newUser = request.Adapt<User>();
+        newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        Insert(newUser);
+        return new AuthResult(true, "User created successfully");
     }
 
     public Task<AuthResult> RefreshTokenAsync(string refreshToken)
