@@ -3,8 +3,8 @@ using Application.DTOs.Response;
 using Application.Interface;
 using Domain.Entities;
 using Infrastructure.Interface;
-using Microsoft.EntityFrameworkCore;
 using Mapster;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
@@ -31,10 +31,11 @@ public class UserServices : Service<User>, IUserServices
     public async Task<ResponseDTO> CreateUser(CreateUserRequest request)
     {
         var user = request.Adapt<User>();
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         Insert(user);
 
-        var response = new ResponseDTO()
+        var response = new ResponseDTO
         {
             Data = user,
             Message = "User created successfully",
