@@ -61,6 +61,4 @@ public class FolderController : ControllerBase
     }
 }
 
-public record CreateFolderRequest(string Name, Guid? ParentFolderId);
-public record UpdateFolderRequest(string Name);
 public record MoveFolderRequest(Guid DestinationFolderId);
