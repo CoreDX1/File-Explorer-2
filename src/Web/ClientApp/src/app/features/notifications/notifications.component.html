@@ -1,0 +1,279 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
+          <p class="text-gray-600">Stay updated with important events and activities</p>
+        </div>
+        <div class="flex space-x-3">
+          <button class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+            Mark all as read
+          </button>
+          <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Filters -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center">
+          <input id="filter-all" name="filter" type="radio" checked class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+          <label for="filter-all" class="ml-2 block text-sm text-gray-900">
+            All Notifications
+          </label>
+        </div>
+        <div class="flex items-center">
+          <input id="filter-unread" name="filter" type="radio" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+          <label for="filter-unread" class="ml-2 block text-sm text-gray-900">
+            Unread Only
+          </label>
+        </div>
+        <div class="flex items-center">
+          <input id="filter-mentions" name="filter" type="radio" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+          <label for="filter-mentions" class="ml-2 block text-sm text-gray-900">
+            Mentions
+          </label>
+        </div>
+        <div class="flex items-center">
+          <input id="filter-shares" name="filter" type="radio" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+          <label for="filter-shares" class="ml-2 block text-sm text-gray-900">
+            File Shares
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <ul class="divide-y divide-gray-200">
+        <li class="bg-blue-50">
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">System Notification</span> Your storage is almost full. Upgrade to avoid interruption.
+                </p>
+                <p class="text-sm text-gray-500">2 hours ago</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900 font-medium">Upgrade</button>
+              </div>
+            </div>
+          </div>
+        </li>
+        
+        <li>
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-green-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">File uploaded</span> Your file "Project_Specifications.pdf" was successfully uploaded.
+                </p>
+                <p class="text-sm text-gray-500">4 hours ago</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900">View</button>
+              </div>
+            </div>
+          </div>
+        </li>
+        
+        <li>
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-yellow-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">Sarah Johnson</span> shared the file "Marketing_Report.pdf" with you.
+                </p>
+                <p class="text-sm text-gray-500">Yesterday • 3:45 PM</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900 mr-2">Accept</button>
+                <button class="text-gray-600 hover:text-gray-900">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        </li>
+        
+        <li>
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">Security Alert</span> Successfully logged in from a new device.
+                </p>
+                <p class="text-sm text-gray-500">Oct 12, 2024 • 10:30 AM</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900">Review</button>
+              </div>
+            </div>
+          </div>
+        </li>
+        
+        <li>
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-purple-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">Michael Brown</span> mentioned you in a comment on "Budget_Q3.xlsx".
+                </p>
+                <p class="text-sm text-gray-500">Oct 11, 2024 • 4:20 PM</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900">View</button>
+              </div>
+            </div>
+          </div>
+        </li>
+        
+        <li>
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-green-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">File sync</span> All local changes have been synchronized to the cloud.
+                </p>
+                <p class="text-sm text-gray-500">Oct 10, 2024 • 11:15 AM</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900">View</button>
+              </div>
+            </div>
+          </div>
+        </li>
+        
+        <li>
+          <div class="px-6 py-4">
+            <div class="flex space-x-3">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <svg class="h-6 w-6 text-yellow-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-800">
+                  <span class="font-medium text-gray-900">Storage Warning</span> You're using 85% of your storage space. Consider upgrading.
+                </p>
+                <p class="text-sm text-gray-500">Oct 9, 2024 • 2:30 PM</p>
+              </div>
+              <div class="flex-shrink-0 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-blue-600 hover:text-blue-900">Upgrade</button>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Load More -->
+    <div class="mt-6 text-center">
+      <button class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        Load more notifications
+      </button>
+    </div>
+
+    <!-- Notification Preferences -->
+    <div class="mt-8 bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+      
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-medium text-gray-900">Email notifications</h4>
+            <p class="text-sm text-gray-500">Receive email notifications for important events</p>
+          </div>
+          <button type="button" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-blue-600" role="switch" aria-checked="true" aria-labelledby="email-notifications-label">
+            <span class="sr-only">Use setting</span>
+            <span aria-hidden="true" class="translate-x-5 pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-medium text-gray-900">Push notifications</h4>
+            <p class="text-sm text-gray-500">Receive push notifications on your devices</p>
+          </div>
+          <button type="button" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-blue-600" role="switch" aria-checked="true" aria-labelledby="push-notifications-label">
+            <span class="sr-only">Use setting</span>
+            <span aria-hidden="true" class="translate-x-5 pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-medium text-gray-900">File sharing notifications</h4>
+            <p class="text-sm text-gray-500">Receive notifications when files are shared with you</p>
+          </div>
+          <button type="button" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-blue-600" role="switch" aria-checked="true" aria-labelledby="file-sharing-label">
+            <span class="sr-only">Use setting</span>
+            <span aria-hidden="true" class="translate-x-5 pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-medium text-gray-900">Storage warnings</h4>
+            <p class="text-sm text-gray-500">Receive notifications when you're running low on storage</p>
+          </div>
+          <button type="button" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-blue-600" role="switch" aria-checked="true" aria-labelledby="storage-warnings-label">
+            <span class="sr-only">Use setting</span>
+            <span aria-hidden="true" class="translate-x-5 pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
