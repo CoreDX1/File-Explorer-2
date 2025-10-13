@@ -33,4 +33,15 @@ public class UserController : ControllerBase
         await _unitOfWorkAsync.SaveChangesAsync();
         return Ok(user);
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        var response = await _userServices.Login(request.Email, request.Password);
+        if (!response.Success)
+        {
+            return Unauthorized(response);
+        }
+        return Ok(response);
+    }
 }
