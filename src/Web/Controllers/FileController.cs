@@ -53,11 +53,12 @@ public class FileController : ControllerBase
     }
 
     [HttpPost("{id:guid}/share")]
-    public async Task<IActionResult> ShareFile(Guid id, [FromBody] ShareFileRequest request)
+    public async Task<IActionResult> ShareFile(
+        Guid id,
+        [FromBody] Application.Interface.ShareFileRequest request
+    )
     {
         var shareLink = await _fileServices.CreateShareLinkAsync(id, request);
         return Ok(shareLink);
     }
 }
-
-public record ShareFileRequest(string Email, string Permission, DateTime? ExpiresAt);
