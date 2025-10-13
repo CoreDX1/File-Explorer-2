@@ -1,50 +1,66 @@
-namespace Web.Controllers;
-
 using Application.Interface;
-using Ardalis.Result;
-using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+namespace Web.Controllers;
+
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
+[Authorize]
 public class FolderController : ControllerBase
 {
     private readonly IFolderServices _folderServices;
+    private readonly ILogger<FolderController> _logger;
 
-    public FolderController(IFolderServices folderServices)
+    public FolderController(IFolderServices folderServices, ILogger<FolderController> logger)
     {
         _folderServices = folderServices;
+        _logger = logger;
     }
 
-    [HttpGet]
-    [Route("list")] // GET /api/folder/list
-    public Result<List<DirectoryItem>> GetSubFolders(string path)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetFolder(Guid id)
     {
-        return _folderServices.GetSubFolders(path);
+        var folder = await _folderServices.GetFolderByIdAsync(id);
+        return folder != null ? Ok(folder) : NotFound();
     }
 
-    [HttpGet]
-    [Route("{path}")] // GET /api/folder/list
-    public Result<List<FileItem>> GetFiles(string path)
+    [HttpGet("{id:guid}/contents")]
+    public async Task<IActionResult> GetFolderContents(Guid id)
     {
-        return _folderServices.GetFiles(path);
+        var contents = await _folderServices.GetFolderContentsAsync(id);
+        return Ok(contents);
     }
 
-    [HttpPut("rename")] // PUT /api/folder/rename
-    public Result<string> RenameFolder(string oldPath, string newPath)
+    [HttpPost]
+    public async Task<IActionResult> CreateFolder([FromBody] CreateFolderRequest request)
     {
-        return _folderServices.RenameFolder(oldPath, newPath);
+        var folder = await _folderServices.CreateFolderAsync(request);
+        return CreatedAtAction(nameof(GetFolder), new { id = folder.Id }, folder);
     }
 
-    [HttpDelete("delete")] // DELETE /api/folder/delete
-    public Result<string> DeleteFolder(string path)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateFolder(Guid id, [FromBody] UpdateFolderRequest request)
     {
-        return _folderServices.DeleteFolder(path);
+        await _folderServices.UpdateFolderAsync(id, request);
+        return NoContent();
     }
 
-    [HttpPost("create")] // POST /api/folder/create
-    public Result<string> CreateFolder(string path)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteFolder(Guid id)
     {
-        return _folderServices.CreateFolder(path);
+        await _folderServices.DeleteFolderAsync(id);
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/move")]
+    public async Task<IActionResult> MoveFolder(Guid id, [FromBody] MoveFolderRequest request)
+    {
+        await _folderServices.MoveFolderAsync(id, request.DestinationFolderId);
+        return NoContent();
     }
 }
+
+public record CreateFolderRequest(string Name, Guid? ParentFolderId);
+public record UpdateFolderRequest(string Name);
+public record MoveFolderRequest(Guid DestinationFolderId);

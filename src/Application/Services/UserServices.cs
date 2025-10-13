@@ -10,13 +10,8 @@ namespace Application.Services;
 
 public class UserServices : Service<User>, IUserServices
 {
-    private readonly IRepositoryAsync<User> _repository;
-
     public UserServices(IRepositoryAsync<User> repository)
-        : base(repository)
-    {
-        _repository = repository;
-    }
+        : base(repository) { }
 
     public async Task<List<User>> GetAllUsers()
     {

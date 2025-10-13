@@ -1,0 +1,85 @@
+using Application.DTOs.Request;
+using Application.Interface;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Web.Controllers;
+
+[ApiController]
+[Route("api/v1/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly IUserServices _userServices;
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(IUserServices userServices, ILogger<AuthController> logger)
+    {
+        _userServices = userServices;
+        _logger = logger;
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        var result = await _userServices.AuthenticateAsync(request.Email, request.Password);
+        
+        if (!result.Success)
+        {
+            _logger.LogWarning("Failed login attempt for: {Email}", request.Email);
+            return Unauthorized(new { message = "Invalid credentials" });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
+    {
+        var result = await _userServices.CreateUserAsync(request);
+        
+        if (!result.Success)
+            return BadRequest(new { message = result.Message });
+
+        return Ok(result);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var result = await _userServices.RefreshTokenAsync(request.RefreshToken);
+        
+        if (!result.Success)
+            return Unauthorized(new { message = "Invalid refresh token" });
+
+        return Ok(result);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+    {
+        await _userServices.RevokeTokenAsync(request.RefreshToken);
+        return NoContent();
+    }
+
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
+    {
+        var result = await _userServices.GoogleAuthAsync(request.IdToken);
+        
+        if (!result.Success)
+            return BadRequest(new { message = result.Message });
+
+        return Ok(result);
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await _userServices.SendPasswordResetAsync(request.Email);
+        return Ok(new { message = "Password reset email sent" });
+    }
+}
+
+public record RefreshTokenRequest(string RefreshToken);
+public record LogoutRequest(string RefreshToken);
+public record GoogleAuthRequest(string IdToken);
+public record ForgotPasswordRequest(string Email);
