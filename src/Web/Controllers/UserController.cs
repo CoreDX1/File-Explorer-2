@@ -1,3 +1,4 @@
+using Application.DTOs.Request;
 using Application.Interface;
 using Domain.Entities;
 using Infrastructure.Interface;
@@ -26,9 +27,9 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] User user)
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
     {
-        _userServices.Insert(user);
+        await _userServices.CreateUser(user);
         await _unitOfWorkAsync.SaveChangesAsync();
         return Ok(user);
     }
