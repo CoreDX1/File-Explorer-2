@@ -24,4 +24,12 @@ public class UserController : ControllerBase
         List<User> users = await _userServices.GetAllUsers();
         return Ok(users);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] User user)
+    {
+        _userServices.Insert(user);
+        await _unitOfWorkAsync.SaveChangesAsync();
+        return Ok(user);
+    }
 }
