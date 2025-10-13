@@ -11,6 +11,9 @@ public static class DependencyInjection
         services.AddScoped<IFileServices, FileServices>();
         services.AddScoped<IFolderServices, FolderServices>();
         services.AddScoped<IUserServices, UserServices>();
+
+        services.AddAutoMapper(typeof(DependencyInjection)); // Busca perfiles en este assembly
+
         return services;
     }
 }
