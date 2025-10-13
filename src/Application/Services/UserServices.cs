@@ -63,4 +63,34 @@ public class UserServices : Service<User>, IUserServices
             Success = true,
         };
     }
+
+    public Task<AuthResult> AuthenticateAsync(string email, string password)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<AuthResult> CreateUserAsync(CreateUserRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<AuthResult> RefreshTokenAsync(string refreshToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RevokeTokenAsync(string refreshToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<AuthResult> GoogleAuthAsync(string idToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendPasswordResetAsync(string email)
+    {
+        throw new NotImplementedException();
+    }
 }
