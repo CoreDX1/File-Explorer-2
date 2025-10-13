@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var result = await _userServices.AuthenticateAsync(request.Email, request.Password);
-        
+
         if (!result.Success)
         {
             _logger.LogWarning("Failed login attempt for: {Email}", request.Email);
@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
     {
         var result = await _userServices.CreateUserAsync(request);
-        
+
         if (!result.Success)
             return BadRequest(new { message = result.Message });
 
@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         var result = await _userServices.RefreshTokenAsync(request.RefreshToken);
-        
+
         if (!result.Success)
             return Unauthorized(new { message = "Invalid refresh token" });
 
@@ -64,7 +64,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
     {
         var result = await _userServices.GoogleAuthAsync(request.IdToken);
-        
+
         if (!result.Success)
             return BadRequest(new { message = result.Message });
 
@@ -80,6 +80,9 @@ public class AuthController : ControllerBase
 }
 
 public record RefreshTokenRequest(string RefreshToken);
+
 public record LogoutRequest(string RefreshToken);
+
 public record GoogleAuthRequest(string IdToken);
+
 public record ForgotPasswordRequest(string Email);
