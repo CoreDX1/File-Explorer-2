@@ -17,8 +17,11 @@ public static class DependencyInjection
     {
         services.AddDbContext<FileExplorerDbContext>(options =>
         {
-            options.UseSqlite(configuration.GetConnectionString("DefaultConection"));
+            options.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
         });
+
+        // Register DbContext base class for UnitOfWork
+        services.AddScoped<DbContext>(provider => provider.GetService<FileExplorerDbContext>()!);
 
         // Unit of Work registration
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -27,5 +30,8 @@ public static class DependencyInjection
         // Repository registration (optional if using Unit of Work)
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IFolderRepository, FolderRepository>();
+        
+        // Generic repository registration
+        services.AddScoped(typeof(IRepositoryAsync<>), typeof(Repository<>));
     }
 }

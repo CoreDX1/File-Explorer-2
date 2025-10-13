@@ -1,3 +1,4 @@
+using Application.DTOs.Request;
 using Application.Interface;
 using Domain.Entities;
 using Infrastructure.Interface;
@@ -23,5 +24,13 @@ public class UserController : ControllerBase
     {
         List<User> users = await _userServices.GetAllUsers();
         return Ok(users);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
+    {
+        await _userServices.CreateUser(user);
+        await _unitOfWorkAsync.SaveChangesAsync();
+        return Ok(user);
     }
 }
