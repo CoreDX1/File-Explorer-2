@@ -44,4 +44,28 @@ public class UserServices : Service<User>, IUserServices
 
         return response;
     }
+
+    public async Task<ResponseDTO> Login(string email, string password)
+    {
+        var user = await GetUserByEmail(email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            return new ResponseDTO
+            {
+                Data = null,
+                Message = "Invalid email or password",
+                Success = false,
+            };
+        }
+
+        user.LastLoginAt = DateTime.UtcNow;
+        Update(user);
+
+        return new ResponseDTO
+        {
+            Data = user,
+            Message = "Login successful",
+            Success = true,
+        };
+    }
 }
