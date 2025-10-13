@@ -1,5 +1,7 @@
 namespace Application.Services;
 
+using System;
+using System.Threading.Tasks;
 using Application.Interface;
 using Ardalis.Result;
 using Domain.Entities;
@@ -59,5 +61,35 @@ public class FolderServices : IFolderServices
             return Result.NotFound("El directorio no pudo ser borrado.");
 
         return Result.Success("El directorio fue borrado correctamente.");
+    }
+
+    public Task<FolderItem?> GetFolderByIdAsync(Guid id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<FolderContentsResult> GetFolderContentsAsync(Guid id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<FolderItem> CreateFolderAsync(CreateFolderRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task UpdateFolderAsync(Guid id, UpdateFolderRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteFolderAsync(Guid id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task MoveFolderAsync(Guid id, Guid destinationFolderId)
+    {
+        throw new NotImplementedException();
     }
 }

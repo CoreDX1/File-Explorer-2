@@ -10,13 +10,8 @@ namespace Application.Services;
 
 public class UserServices : Service<User>, IUserServices
 {
-    private readonly IRepositoryAsync<User> _repository;
-
     public UserServices(IRepositoryAsync<User> repository)
-        : base(repository)
-    {
-        _repository = repository;
-    }
+        : base(repository) { }
 
     public async Task<List<User>> GetAllUsers()
     {
@@ -43,5 +38,59 @@ public class UserServices : Service<User>, IUserServices
         };
 
         return response;
+    }
+
+    public async Task<ResponseDTO> Login(string email, string password)
+    {
+        var user = await GetUserByEmail(email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            return new ResponseDTO
+            {
+                Data = null,
+                Message = "Invalid email or password",
+                Success = false,
+            };
+        }
+
+        user.LastLoginAt = DateTime.UtcNow;
+        Update(user);
+
+        return new ResponseDTO
+        {
+            Data = user,
+            Message = "Login successful",
+            Success = true,
+        };
+    }
+
+    public Task<AuthResult> AuthenticateAsync(string email, string password)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<AuthResult> CreateUserAsync(CreateUserRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<AuthResult> RefreshTokenAsync(string refreshToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RevokeTokenAsync(string refreshToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<AuthResult> GoogleAuthAsync(string idToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendPasswordResetAsync(string email)
+    {
+        throw new NotImplementedException();
     }
 }

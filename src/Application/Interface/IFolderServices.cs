@@ -12,4 +12,20 @@ public interface IFolderServices
     Result<string> CreateFolder(string path);
     Result<string> RenameFolder(string oldPath, string newPath);
     Result<string> DeleteFolder(string path);
+
+    // New async methods for FolderController
+    Task<FolderItem?> GetFolderByIdAsync(Guid id);
+    Task<FolderContentsResult> GetFolderContentsAsync(Guid id);
+    Task<FolderItem> CreateFolderAsync(CreateFolderRequest request);
+    Task UpdateFolderAsync(Guid id, UpdateFolderRequest request);
+    Task DeleteFolderAsync(Guid id);
+    Task MoveFolderAsync(Guid id, Guid destinationFolderId);
 }
+
+public record FolderItem(Guid Id, string Name, Guid? ParentFolderId, DateTime CreatedAt);
+
+public record FolderContentsResult(List<FolderItem> Folders, List<FileItem> Files);
+
+public record CreateFolderRequest(string Name, Guid? ParentFolderId);
+
+public record UpdateFolderRequest(string Name);

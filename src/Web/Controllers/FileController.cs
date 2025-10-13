@@ -1,48 +1,64 @@
 using Application.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
+[Authorize]
 public class FileController : ControllerBase
 {
     private readonly IFileServices _fileServices;
+    private readonly ILogger<FileController> _logger;
 
-    public FileController(IFileServices fileServices)
+    public FileController(IFileServices fileServices, ILogger<FileController> logger)
     {
         _fileServices = fileServices;
+        _logger = logger;
     }
 
-    [HttpGet]
-    [Route("list")]
-    public IActionResult GetFiles(string path)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetFile(Guid id)
     {
-        var files = _fileServices.GetFiles(path);
-
-        return Ok(files);
+        var file = await _fileServices.GetFileByIdAsync(id);
+        return file != null ? Ok(file) : NotFound();
     }
 
-    [HttpGet]
-    [Route("{filePath}")]
-    public IActionResult ReadFile(string filePath)
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] Guid? folderId)
     {
-        var file = _fileServices.ReadFile(filePath);
+        if (file == null || file.Length == 0)
+            return BadRequest("No file provided");
 
-        return Ok(file);
+        var result = await _fileServices.UploadFileAsync(file, folderId);
+        return Ok(result);
     }
 
-    [HttpDelete]
-    [Route("{filePath}")]
-    public Task<IActionResult> DeleteFileAsync(string filePath)
+    [HttpGet("{id:guid}/download")]
+    public async Task<IActionResult> DownloadFile(Guid id)
     {
-        throw new NotImplementedException();
+        var fileStream = await _fileServices.DownloadFileAsync(id);
+        if (fileStream == null)
+            return NotFound();
+
+        return File(fileStream.Stream, fileStream.ContentType, fileStream.FileName);
     }
 
-    [HttpPost]
-    [Route("{filePath}")]
-    public Task<IActionResult> CreateFileAsync(string filePath)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteFile(Guid id)
     {
-        throw new NotImplementedException();
+        await _fileServices.DeleteFileAsync(id);
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/share")]
+    public async Task<IActionResult> ShareFile(
+        Guid id,
+        [FromBody] Application.Interface.ShareFileRequest request
+    )
+    {
+        var shareLink = await _fileServices.CreateShareLinkAsync(id, request);
+        return Ok(shareLink);
     }
 }
