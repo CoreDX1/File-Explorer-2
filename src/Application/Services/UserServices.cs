@@ -1,6 +1,7 @@
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interface;
+using Application.Services;
 using Domain.Entities;
 using Infrastructure.Interface;
 using Mapster;
@@ -10,8 +11,13 @@ namespace Application.Services;
 
 public class UserServices : Service<User>, IUserServices
 {
-    public UserServices(IRepositoryAsync<User> repository)
-        : base(repository) { }
+    private readonly IJwtTokenService _jwtTokenService;
+
+    public UserServices(IRepositoryAsync<User> repository, IJwtTokenService jwtTokenService)
+        : base(repository) 
+    {
+        _jwtTokenService = jwtTokenService;
+    }
 
     public async Task<List<User>> GetAllUsers()
     {
@@ -64,9 +70,17 @@ public class UserServices : Service<User>, IUserServices
         };
     }
 
-    public Task<AuthResult> AuthenticateAsync(string email, string password)
+    public async Task<AuthResult> AuthenticateAsync(string email, string password)
     {
-        throw new NotImplementedException();
+        var user = await GetUserByEmail(email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            return new AuthResult(false, "Invalid credentials");
+        }
+
+        var token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
+        
+        return new AuthResult(true, "Login successful", new { Token = token, User = user });
     }
 
     public async Task<AuthResult> CreateUserAsync(CreateUserRequest request)

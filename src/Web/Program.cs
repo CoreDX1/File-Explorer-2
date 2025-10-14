@@ -24,24 +24,23 @@ builder.Services.AddCors(options =>
 });
 
 // Add authentication
-builder
-    .Services.AddAuthentication("Bearer")
-    .AddJwtBearer(
-        "Bearer",
-        options =>
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters =
-                new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = false,
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = false,
-                };
-        }
-    );
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("your-super-secret-key-that-is-at-least-32-characters-long!")),
+            ValidateIssuer = true,
+            ValidIssuer = "FileExplorer",
+            ValidateAudience = true,
+            ValidAudience = "FileExplorerUsers",
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 // Add application and infrastructure services
 builder.Services.AddApplicationServices();
