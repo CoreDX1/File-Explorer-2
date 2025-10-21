@@ -4,10 +4,11 @@ import { Router } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import {
   Response,
-  User,
+  LoginResponse,
   UserServices,
 } from "../../core/services/user.services";
 import { MyGlobalObject } from "../../core/services/MyGlobalObject";
+import { AuthService } from "../../core/services/auth.service";
 
 @Component({
   selector: "app-login",
@@ -24,6 +25,7 @@ export class LoginComponent {
     private auth: UserServices,
     private router: Router,
     private globalObject: MyGlobalObject,
+    private authService: AuthService,
   ) {}
 
   onLogin(): void {
@@ -33,12 +35,13 @@ export class LoginComponent {
       this.auth
         .login({ email: this.email, password: this.password })
         .subscribe({
-          next: (response: Response<User>) => {
+          next: (response: Response<LoginResponse>) => {
             console.log("Login successful:", response);
 
             if (!response.success) {
               this.isValid = false;
             } else {
+              this.authService.login(response.data.token);
               this.globalObject.setUserName(response.data.fullName);
               this.router.navigate(["/explorer"]);
             }
