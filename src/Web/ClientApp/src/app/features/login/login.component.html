@@ -23,28 +23,28 @@
       <div *ngIf="!isValid" class="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">
         Invalid email or password. Please try again.
       </div>
-      
+
       <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-          <input 
-            type="email" 
-            [(ngModel)]="email" 
-            name="email" 
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="email"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input 
-            type="password" 
-            [(ngModel)]="password" 
-            name="password" 
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         </div>
-        
+
         <div class="flex justify-between items-center">
           <label class="flex items-center">
             <input type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
@@ -52,15 +52,15 @@
           </label>
           <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Forgot password?</a>
         </div>
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           [disabled]="!loginForm.form.valid"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
           Sign In
         </button>
       </form>
-      
+
       <div class="mt-6 text-center">
         <p class="text-xs text-gray-500">
           Need help? Contact your system administrator
@@ -81,4 +81,3 @@
     </div>
   </footer>
 </div>
-
