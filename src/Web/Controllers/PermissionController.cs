@@ -57,8 +57,6 @@ public class PermissionController : ControllerBase
         // TODO: Implement grant folder permission logic
         return Ok(new { message = "Permission granted successfully" });
     }
-
-    [HttpGet]
 }
 
 public record GrantPermissionRequest(
