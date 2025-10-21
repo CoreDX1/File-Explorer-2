@@ -10,9 +10,9 @@ export class UserServices {
 
   constructor(private http: HttpClient) {}
 
-  login(credential: LoginRequest): Observable<Response<User>> {
+  login(credential: LoginRequest): Observable<Response<LoginResponse>> {
     {
-      return this.http.post<Response<User>>(`${this.url}/login`, credential);
+      return this.http.post<Response<LoginResponse>>(`${this.url}/login`, credential);
     }
   }
 }
@@ -38,7 +38,7 @@ export interface User {
   modifiedProperties: any;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   email: string;
   fullName: string;
   token: string;
