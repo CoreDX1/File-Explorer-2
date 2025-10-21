@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { Router, Routes } from '@angular/router';
 import { LoginComponent } from './features/login/login.component';
 import { FileExplorerPageComponent } from './features/file-explorer-page/file-explorer-page.component';
 import { AdminDashboardComponent } from './features/admin-dashboard/admin-dashboard.component';
@@ -17,6 +17,22 @@ import { AdminReportsComponent } from './features/admin-reports/admin-reports.co
 import { BillingPaymentsComponent } from './features/billing-payments/billing-payments.component';
 import { SecuritySettingsComponent } from './features/security-settings/security-settings.component';
 import { AuthGuard } from './core/guards/auth.guard';
+import { Component } from '@angular/core';
+import { AuthService } from './auth.service';
+
+@Component({
+  template: '',
+  standalone: true
+})
+export class RedirectComponent{
+  constructor(private auth:AuthService,private router:Router) {
+    if(this.auth.isLoggedIn()){
+      this.router.navigate(["/explorer"]);
+    }else{
+      this.router.navigate(["/login"]);
+    }
+  }
+}
 
 export const routes: Routes = [
   {
@@ -24,9 +40,9 @@ export const routes: Routes = [
     component: LoginComponent,
   },
   {
+    canActivate: [AuthGuard],
     path: 'explorer', 
-    component: FileExplorerPageComponent,
-    canActivate: [AuthGuard]
+    component: FileExplorerPageComponent
   },
   {
     path: 'admin', 
@@ -105,7 +121,7 @@ export const routes: Routes = [
   },
   {
     path: '', 
-    redirectTo: '/login', 
+    component: RedirectComponent,
     pathMatch: 'full'
   }
 ];
