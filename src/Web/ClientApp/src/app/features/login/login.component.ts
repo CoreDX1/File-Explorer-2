@@ -42,7 +42,7 @@ export class LoginComponent {
               this.isValid = false;
             } else {
               this.authService.login(response.data.token);
-              this.globalObject.setUserName(response.data.fullName);
+              this.globalObject.setUserData(response.data);
               this.router.navigate(['/explorer']);
             }
           },
