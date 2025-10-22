@@ -22,7 +22,7 @@ public class AuthController : ControllerBase
     {
         var result = await _userServices.AuthenticateAsync(request.Email, request.Password);
 
-        if (!result.Success)
+        if (result.Metadata?.StatusCode != 200)
         {
             _logger.LogWarning("Failed login attempt for: {Email}", request.Email);
             return Unauthorized(new { message = "Invalid credentials" });
@@ -36,8 +36,8 @@ public class AuthController : ControllerBase
     {
         var result = await _userServices.CreateUserAsync(request);
 
-        if (!result.Success)
-            return BadRequest(new { message = result.Message });
+        if (result.Metadata?.StatusCode != 201)
+            return BadRequest(new { message = result.Metadata?.Message });
 
         return Ok(result);
     }
@@ -47,7 +47,7 @@ public class AuthController : ControllerBase
     {
         var result = await _userServices.RefreshTokenAsync(request.RefreshToken);
 
-        if (!result.Success)
+        if (result.Metadata?.StatusCode != 200)
             return Unauthorized(new { message = "Invalid refresh token" });
 
         return Ok(result);
@@ -65,8 +65,8 @@ public class AuthController : ControllerBase
     {
         var result = await _userServices.GoogleAuthAsync(request.IdToken);
 
-        if (!result.Success)
-            return BadRequest(new { message = result.Message });
+        if (result.Metadata?.StatusCode != 200)
+            return BadRequest(new { message = result.Metadata?.Message });
 
         return Ok(result);
     }
