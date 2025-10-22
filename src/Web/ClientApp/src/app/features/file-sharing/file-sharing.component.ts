@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-file-sharing',
   templateUrl: './file-sharing.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class FileSharingComponent {}

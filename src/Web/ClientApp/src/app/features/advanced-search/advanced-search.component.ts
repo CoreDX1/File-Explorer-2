@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-advanced-search',
   templateUrl: './advanced-search.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class AdvancedSearchComponent {}

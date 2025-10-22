@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-notifications',
   templateUrl: './notifications.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class NotificationsComponent {}

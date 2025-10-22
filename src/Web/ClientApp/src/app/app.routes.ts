@@ -22,14 +22,14 @@ import { AuthService } from './auth.service';
 
 @Component({
   template: '',
-  standalone: true
+  standalone: true,
 })
-export class RedirectComponent{
-  constructor(private auth:AuthService,private router:Router) {
-    if(this.auth.isLoggedIn()){
-      this.router.navigate(["/explorer"]);
-    }else{
-      this.router.navigate(["/login"]);
+export class RedirectComponent {
+  constructor(private auth: AuthService, private router: Router) {
+    if (this.auth.isLoggedIn()) {
+      this.router.navigate(['/explorer']);
+    } else {
+      this.router.navigate(['/login']);
     }
   }
 }
@@ -41,87 +41,87 @@ export const routes: Routes = [
   },
   {
     canActivate: [AuthGuard],
-    path: 'explorer', 
-    component: FileExplorerPageComponent
+    path: 'explorer',
+    component: FileExplorerPageComponent,
   },
   {
-    path: 'admin', 
+    path: 'admin',
     component: AdminDashboardComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'storage', 
+    path: 'storage',
     component: StoragePaymentComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'profile', 
+    path: 'profile',
     component: UserProfileComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'settings', 
+    path: 'settings',
     component: ApplicationSettingsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'admin/users', 
+    path: 'admin/users',
     component: AdminUsersComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'groups', 
+    path: 'groups',
     component: GroupsManagementComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'sharing', 
+    path: 'sharing',
     component: FileSharingComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'activity', 
+    path: 'activity',
     component: ActivityHistoryComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'trash', 
+    path: 'trash',
     component: TrashBinComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'search', 
+    path: 'search',
     component: AdvancedSearchComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'notifications', 
+    path: 'notifications',
     component: NotificationsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'help', 
+    path: 'help',
     component: HelpDocumentationComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'admin/reports', 
+    path: 'admin/reports',
     component: AdminReportsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'billing', 
+    path: 'billing',
     component: BillingPaymentsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'security', 
+    path: 'security',
     component: SecuritySettingsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: '', 
+    path: '',
     component: RedirectComponent,
-    pathMatch: 'full'
-  }
+    pathMatch: 'full',
+  },
 ];

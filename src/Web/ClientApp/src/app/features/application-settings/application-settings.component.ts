@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-application-settings',
   templateUrl: './application-settings.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class ApplicationSettingsComponent {}

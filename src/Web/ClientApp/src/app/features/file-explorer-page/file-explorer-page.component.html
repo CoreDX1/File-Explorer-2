@@ -94,10 +94,12 @@
               >
                 <!-- User Info Header -->
                 <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                  <p class="text-sm font-semibold text-gray-900">{{userName}}</p>
+                  <p class="text-sm font-semibold text-gray-900">
+                    {{ userName }}
+                  </p>
                   <p class="text-xs text-gray-500">Administrador</p>
                 </div>
-                
+
                 <div class="py-2">
                   <a
                     href="#"
@@ -118,7 +120,7 @@
                     </svg>
                     <span>Mi Perfil</span>
                   </a>
-                  
+
                   <a
                     href="#"
                     class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
@@ -144,7 +146,7 @@
                     </svg>
                     <span>Configuración</span>
                   </a>
-                  
+
                   <a
                     href="#"
                     class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
@@ -165,7 +167,7 @@
                     <span>Soporte</span>
                   </a>
                 </div>
-                
+
                 <div class="border-t border-gray-100 py-2">
                   <button
                     (click)="logout()"

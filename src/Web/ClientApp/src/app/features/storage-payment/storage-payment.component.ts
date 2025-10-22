@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-storage-payment',
   templateUrl: './storage-payment.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class StoragePaymentComponent {}

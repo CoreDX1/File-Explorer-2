@@ -4,12 +4,7 @@ import { FileExplorerComponent } from './file-explorer.component';
 
 @NgModule({
   declarations: [],
-  imports: [
-    CommonModule,
-    FileExplorerComponent
-  ],
-  exports: [
-    FileExplorerComponent
-  ]
+  imports: [CommonModule, FileExplorerComponent],
+  exports: [FileExplorerComponent],
 })
 export class FileExplorerModule {}

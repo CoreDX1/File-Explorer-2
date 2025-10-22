@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-security-settings',
   templateUrl: './security-settings.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class SecuritySettingsComponent {}
