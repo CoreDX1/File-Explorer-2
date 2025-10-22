@@ -57,32 +57,34 @@ public class UserServices : Service<User>, IUserServices
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
-    public async Task<AuthResult> AuthenticateAsync(string email, string password)
+    public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
     {
         var user = await GetUserByEmail(email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            return new AuthResult(false, "Invalid credentials");
+            return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
 
         var token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
+        var userMapper = user.Adapt<LoginResponse>();
+        userMapper.Token = token;
 
-        return new AuthResult(true, "Login successful", new { Token = token, User = user });
+        return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
-    public async Task<AuthResult> CreateUserAsync(CreateUserRequest request)
+    public async Task<ApiResult<object>> CreateUserAsync(CreateUserRequest request)
     {
         var user = await GetUserByEmail(request.Email);
         if (user != null)
-            return new AuthResult(false, "User already exists");
+            return ApiResult<object>.Error("User already exists", 400);
 
         var newUser = request.Adapt<User>();
         newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         Insert(newUser);
-        return new AuthResult(true, "User created successfully");
+        return ApiResult<object>.Success(null, "User created successfully", 201);
     }
 
-    public Task<AuthResult> RefreshTokenAsync(string refreshToken)
+    public Task<ApiResult<object>> RefreshTokenAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
@@ -92,7 +94,7 @@ public class UserServices : Service<User>, IUserServices
         throw new NotImplementedException();
     }
 
-    public Task<AuthResult> GoogleAuthAsync(string idToken)
+    public Task<ApiResult<object>> GoogleAuthAsync(string idToken)
     {
         throw new NotImplementedException();
     }
