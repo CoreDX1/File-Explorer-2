@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-admin-users',
   templateUrl: './admin-users.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class AdminUsersComponent {}

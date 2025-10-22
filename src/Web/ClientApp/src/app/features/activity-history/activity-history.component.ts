@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-activity-history',
   templateUrl: './activity-history.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class ActivityHistoryComponent {}

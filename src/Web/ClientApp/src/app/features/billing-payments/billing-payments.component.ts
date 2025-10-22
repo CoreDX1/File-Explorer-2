@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-billing-payments',
   templateUrl: './billing-payments.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class BillingPaymentsComponent {}

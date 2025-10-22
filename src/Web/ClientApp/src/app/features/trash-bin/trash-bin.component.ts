@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-trash-bin',
   templateUrl: './trash-bin.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class TrashBinComponent {}

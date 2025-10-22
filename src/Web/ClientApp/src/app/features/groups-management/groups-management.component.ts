@@ -5,6 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-groups-management',
   templateUrl: './groups-management.component.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class GroupsManagementComponent {}
