@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, HostListener } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { FileItem } from "../../core/models/file-item.model";
@@ -105,12 +105,25 @@ export class FileExplorerPageComponent {
     },
   ];
 
-  constructor(public globalObject: MyGlobalObject, public authService : AuthService ) {
+  constructor(public globalObject: MyGlobalObject, private authService : AuthService ) {
   }
 
   get userName(): string { 
     // console.log("Fetching user name e from global object");
     return this.globalObject.getUserName();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) : void{
+    const target = event.target as HTMLElement
+    const drowdown = target.closest('.user-drowdown');
+    if(!drowdown){
+      this.showUserMenu = false;
+    }
+  }
+
+  public logout(){
+    this.authService.logout()
   }
 
   handleSelectItem(item: FileItem): void {
