@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { FileItem } from "../../core/models/file-item.model";
 import { MyGlobalObject } from "../../core/services/MyGlobalObject";
+import { AuthService } from "../../auth.service";
 
 @Component({
   selector: "app-file-explorer-page",
@@ -15,6 +16,7 @@ export class FileExplorerPageComponent {
   selectedItems: FileItem[] = [];
   currentPath: string = "C:\\Users\\User\\Documents";
   activeTab: "home" | "share" | "view" = "home";
+  showUserMenu : boolean = false;
 
   files: FileItem[] = [
     {
@@ -103,11 +105,11 @@ export class FileExplorerPageComponent {
     },
   ];
 
-  constructor(public globalObject: MyGlobalObject) {
+  constructor(public globalObject: MyGlobalObject, public authService : AuthService ) {
   }
 
-  get userName(): string {
-    console.log("Fetching user name from global object");
+  get userName(): string { 
+    // console.log("Fetching user name e from global object");
     return this.globalObject.getUserName();
   }
 
