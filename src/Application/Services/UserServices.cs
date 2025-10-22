@@ -14,7 +14,7 @@ public class UserServices : Service<User>, IUserServices
     private readonly IJwtTokenService _jwtTokenService;
 
     public UserServices(IRepositoryAsync<User> repository, IJwtTokenService jwtTokenService)
-        : base(repository) 
+        : base(repository)
     {
         _jwtTokenService = jwtTokenService;
     }
@@ -29,45 +29,32 @@ public class UserServices : Service<User>, IUserServices
         return await Queryable().FirstOrDefaultAsync(u => u.Email == email);
     }
 
-    public async Task<ResponseDTO> CreateUser(CreateUserRequest request)
+    public async Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request)
     {
         var user = request.Adapt<User>();
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         Insert(user);
 
-        var response = new ResponseDTO
-        {
-            Data = user,
-            Message = "User created successfully",
-            Success = true,
-        };
+        var userMapper = user.Adapt<CreateUserResponse>();
 
-        return response;
+        return ApiResult<CreateUserResponse>.Success(userMapper, "User created successfully", 201);
     }
 
-    public async Task<ResponseDTO> Login(string email, string password)
+    public async Task<ApiResult<LoginResponse>> Login(string email, string password)
     {
         var user = await GetUserByEmail(email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            return new ResponseDTO
-            {
-                Data = null,
-                Message = "Invalid email or password",
-                Success = false,
-            };
+            return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
+
+        var userMapper = user.Adapt<LoginResponse>();
 
         user.LastLoginAt = DateTime.UtcNow;
         Update(user);
 
-        return new ResponseDTO
-        {
-            Data = user,
-            Message = "Login successful",
-            Success = true,
-        };
+        return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
     public async Task<AuthResult> AuthenticateAsync(string email, string password)
@@ -79,7 +66,7 @@ public class UserServices : Service<User>, IUserServices
         }
 
         var token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
-        
+
         return new AuthResult(true, "Login successful", new { Token = token, User = user });
     }
 

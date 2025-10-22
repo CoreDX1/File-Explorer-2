@@ -38,7 +38,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var response = await _userServices.Login(request.Email, request.Password);
-        if (!response.Success)
+        if (!response.Metadata.StatusCode.Equals(200))
         {
             return Unauthorized(response);
         }

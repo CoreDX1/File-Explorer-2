@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FileItem } from '../../core/models/file-item.model';
 import { MyGlobalObject } from '../../core/services/MyGlobalObject';
 import { AuthService } from '../../auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-file-explorer-page',
@@ -107,7 +108,8 @@ export class FileExplorerPageComponent {
 
   constructor(
     public globalObject: MyGlobalObject,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   get userName(): string {
@@ -139,6 +141,14 @@ export class FileExplorerPageComponent {
 
   isSelected(item: FileItem): boolean {
     return this.selectedItems.some((i) => i.id === item.id);
+  }
+
+  handleNavigateProfile(): void {
+    console.log('Navegando a profile...');
+    this.router.navigate(['/profile']).then(
+      (success) => console.log('Navegación exitosa:', success),
+      (error) => console.log('Error en navegación:', error)
+    );
   }
 
   handleDoubleClickItem(item: FileItem): void {

@@ -1,18 +1,21 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { Observable } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class UserServices {
-  private url: string = "http://localhost:5252/api/user";
+  private url: string = 'http://localhost:5252/api/user';
 
   constructor(private http: HttpClient) {}
 
   login(credential: LoginRequest): Observable<Response<LoginResponse>> {
     {
-      return this.http.post<Response<LoginResponse>>(`${this.url}/login`, credential);
+      return this.http.post<Response<LoginResponse>>(
+        `${this.url}/login`,
+        credential
+      );
     }
   }
 }
@@ -26,7 +29,9 @@ export interface Response<T> {
 export interface User {
   id: number;
   username: string;
+  lastName: string;
   email: string;
+  phone: string;
   passwordHash: string;
   fullName: string;
   storageQuotaBytes: number;
@@ -40,7 +45,9 @@ export interface User {
 
 export interface LoginResponse {
   email: string;
-  fullName: string;
+  firtName: string;
+  lastName: string;
+  phone: string;
   token: string;
 }
 
