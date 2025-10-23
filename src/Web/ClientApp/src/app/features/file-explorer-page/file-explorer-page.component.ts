@@ -2,7 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileItem } from '../../core/models/file-item.model';
-import { MyGlobalObject } from '../../core/services/MyGlobalObject';
+import { Data, MyGlobalObject } from '../../core/services/MyGlobalObject';
 import { AuthService } from '../../auth.service';
 import { Router } from '@angular/router';
 
@@ -112,9 +112,9 @@ export class FileExplorerPageComponent {
     private router: Router
   ) {}
 
-  get userName(): string {
+  get userData(): Data | null {
     // console.log("Fetching user name e from global object");
-    return this.globalObject.getUserName();
+    return this.globalObject.getUserData();
   }
 
   @HostListener('document:click', ['$event'])
