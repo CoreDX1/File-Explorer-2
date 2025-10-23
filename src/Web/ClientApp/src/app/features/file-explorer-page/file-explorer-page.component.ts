@@ -18,6 +18,7 @@ export class FileExplorerPageComponent {
   currentPath: string = 'C:\\Users\\User\\Documents';
   activeTab: 'home' | 'share' | 'view' = 'home';
   showUserMenu: boolean = false;
+  showNew: boolean = false;
 
   files: FileItem[] = [
     {

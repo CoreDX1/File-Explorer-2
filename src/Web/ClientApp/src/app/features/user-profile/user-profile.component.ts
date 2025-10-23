@@ -11,7 +11,7 @@ import { Data, MyGlobalObject } from '../../core/services/MyGlobalObject';
 export class UserProfileComponent {
   constructor(private globalObjet: MyGlobalObject) {}
 
-  get userData(): Data | null {
+  get userData(): Data {
     return this.globalObjet.getUserData();
   }
 }
