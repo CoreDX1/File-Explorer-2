@@ -6,23 +6,35 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class UserServices {
-  private url: string = 'http://localhost:5252/api/user';
+  private url: string = 'http://localhost:5252/api/v1';
 
   constructor(private http: HttpClient) {}
 
   login(credential: LoginRequest): Observable<Response<LoginResponse>> {
     {
       return this.http.post<Response<LoginResponse>>(
-        `${this.url}/login`,
+        `${this.url}/auth/login`,
         credential
       );
     }
   }
 }
 
+export enum HttpStatus {
+  OK = 200,
+  CREATE = 201,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  NOT_FOUND = 404,
+  INTERNAL_SERVER_ERROR = 500,
+}
+
 export interface Response<T> {
   message: string;
-  success: boolean;
+  metadata: {
+    statusCode: number;
+    message: string;
+  };
   data: T;
 }
 
@@ -45,7 +57,7 @@ export interface User {
 
 export interface LoginResponse {
   email: string;
-  firtName: string;
+  firstName: string;
   lastName: string;
   phone: string;
   token: string;
