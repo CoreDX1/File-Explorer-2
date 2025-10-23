@@ -112,7 +112,7 @@ export class FileExplorerPageComponent {
     private router: Router
   ) {}
 
-  get userData(): Data | null {
+  get userData(): Data {
     // console.log("Fetching user name e from global object");
     return this.globalObject.getUserData();
   }
