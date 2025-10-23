@@ -67,12 +67,12 @@
                     class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-2"
                   >
                     <span class="text-white font-medium text-sm"
-                      >{{ userData?.firstName?.charAt(0)?.toUpperCase() }}
-                      {{ userData?.lastName?.charAt(0)?.toUpperCase() }}</span
+                      >{{ userData.firstName.charAt(0).toUpperCase() }}
+                      {{ userData.lastName.charAt(0).toUpperCase() }}</span
                     >
                   </div>
                   <span class="text-sm font-medium text-gray-700">
-                    {{ userData?.firstName }} {{ userData?.lastName }}
+                    {{ userData.firstName }} {{ userData.lastName }}
                   </span>
                   <svg
                     class="ml-2 h-4 w-4 text-gray-400"
@@ -96,7 +96,7 @@
                 <!-- User Info Header -->
                 <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
                   <p class="text-sm font-semibold text-gray-900">
-                    {{ userData?.firstName }} {{ userData?.lastName }}
+                    {{ userData.firstName }} {{ userData.lastName }}
                   </p>
                   <p class="text-xs text-gray-500">Administrador</p>
                 </div>
