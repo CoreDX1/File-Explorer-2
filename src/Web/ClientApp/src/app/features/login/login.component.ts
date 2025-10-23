@@ -6,6 +6,7 @@ import {
   Response,
   LoginResponse,
   UserServices,
+  HttpStatus,
 } from '../../core/services/user.services';
 import { MyGlobalObject } from '../../core/services/MyGlobalObject';
 import { AuthService } from '../../core/services/auth.service';
@@ -36,15 +37,15 @@ export class LoginComponent {
         .login({ email: this.email, password: this.password })
         .subscribe({
           next: (response: Response<LoginResponse>) => {
+            if (response.metadata.statusCode !== 200) {
+              this.isValid = false;
+              return;
+            }
             console.log('Login successful:', response);
 
-            if (!response.success) {
-              this.isValid = false;
-            } else {
-              this.authService.login(response.data.token);
-              this.globalObject.setUserData(response.data);
-              this.router.navigate(['/explorer']);
-            }
+            this.authService.login(response.data.token);
+            this.globalObject.setUserData(response.data);
+            this.router.navigate(['/explorer']);
           },
           error: (error: any): void => {
             console.error('Login failed:', error);
