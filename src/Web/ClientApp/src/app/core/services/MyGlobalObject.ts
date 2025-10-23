@@ -19,7 +19,7 @@ export class MyGlobalObject {
 
   public setUserData(user: LoginResponse): void {
     this.user = {
-      firstName: user.firtName,
+      firstName: user.firstName,
       email: user.email,
       lastName: user.lastName,
       phone: user.phone,
@@ -29,13 +29,15 @@ export class MyGlobalObject {
       localStorage.setItem(this.USER_KEY, JSON.stringify(this.user));
     }
   }
-
-  public getUserName(): string {
+  public getUserData(): Data {
     if (isPlatformBrowser(this.platformId)) {
-      const user = localStorage.getItem(this.USER_KEY);
-      return user ? JSON.parse(user).name : '';
+      const userJson: string | null = localStorage.getItem(this.USER_KEY);
+      if (userJson !== null) {
+        const parsedUser: Data = JSON.parse(userJson);
+        return parsedUser;
+      }
     }
-    return this.user.firstName;
+    return this.user;
   }
 
   public clearUserData(): void {
