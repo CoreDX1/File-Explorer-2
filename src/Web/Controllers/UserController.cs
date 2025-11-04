@@ -26,13 +26,13 @@ public class UserController : ControllerBase
         return Ok(users);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
-    {
-        await _userServices.CreateUser(user);
-        await _unitOfWorkAsync.SaveChangesAsync();
-        return Ok(user);
-    }
+    // [HttpPost]
+    // public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
+    // {
+    //     await _userServices.CreateUser(user);
+    //     await _unitOfWorkAsync.SaveChangesAsync();
+    //     return Ok(user);
+    // }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
