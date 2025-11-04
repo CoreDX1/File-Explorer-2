@@ -66,12 +66,13 @@
                   <div
                     class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-2"
                   >
-                    <span class="text-white font-medium text-sm">{{
-                      userName.charAt(0).toUpperCase()
-                    }}</span>
+                    <span class="text-white font-medium text-sm"
+                      >{{ userData.firstName.charAt(0).toUpperCase() }}
+                      {{ userData.lastName.charAt(0).toUpperCase() }}</span
+                    >
                   </div>
                   <span class="text-sm font-medium text-gray-700">
-                    {{ userName }}
+                    {{ userData.firstName }} {{ userData.lastName }}
                   </span>
                   <svg
                     class="ml-2 h-4 w-4 text-gray-400"
@@ -95,7 +96,7 @@
                 <!-- User Info Header -->
                 <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
                   <p class="text-sm font-semibold text-gray-900">
-                    {{ userName }}
+                    {{ userData.firstName }} {{ userData.lastName }}
                   </p>
                   <p class="text-xs text-gray-500">Administrador</p>
                 </div>
@@ -319,19 +320,69 @@
                 />
               </svg>
             </button>
-            <button
-              class="ml-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 flex items-center"
-            >
-              <svg class="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fill-rule="evenodd"
-                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              New
-            </button>
+            <div class="relative ml-2">
+              <button
+                class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 flex items-center"
+                (click)="showNew = !showNew"
+              >
+                <svg class="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                New
+              </button>
+              
+              <div
+                *ngIf="showNew"
+                class="origin-top-left absolute left-0 mt-2 w-56 rounded-lg shadow-xl bg-white border border-gray-200 focus:outline-none z-50"
+              >
+                <div class="py-2">
+                  <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
+                    <svg class="mr-3 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+                    </svg>
+                    <span>Nueva Carpeta</span>
+                  </button>
+                  
+                  <div class="border-t border-gray-100 my-2"></div>
+                  
+                  <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
+                    <svg class="mr-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>Documento de Texto</span>
+                  </button>
+                  
+                  <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
+                    <svg class="mr-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Hoja de Cálculo</span>
+                  </button>
+                  
+                  <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150">
+                    <svg class="mr-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4zM9 6v11h6V6H9z"/>
+                    </svg>
+                    <span>Presentación</span>
+                  </button>
+                  
+                  <div class="border-t border-gray-100 my-2"></div>
+                  
+                  <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-150">
+                    <svg class="mr-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <span>Subir Archivo</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+
           <div class="flex items-center">
             <div class="flex items-center text-sm">
               <span class="text-gray-700 mr-2">View:</span>

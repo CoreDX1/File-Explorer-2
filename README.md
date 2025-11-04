@@ -45,7 +45,7 @@ File-Explorer es una aplicación de escritorio moderna que permite a los usuario
 ## Vistazo a la Aplicación
 
 <p align="center">
-  <img src="image/UI.png" alt="UI File-Explorer" width="60%">
+  <img src="image/UIV2.png" alt="UI File-Explorer" width="60%">
   <br>
   <em>Navegación de carpetas en File-Explorer.</em>
 </p>
