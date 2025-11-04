@@ -1,6 +1,9 @@
 using Application.AutoMapper;
+using Application.DTOs.Request;
 using Application.Interface;
 using Application.Services;
+using Application.Validation;
+using FluentValidation;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +17,8 @@ public static class DependencyInjection
         services.AddScoped<IFolderServices, FolderServices>();
         services.AddScoped<IUserServices, UserServices>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+        services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
 
         services.AddMapster();
         var config = TypeAdapterConfig.GlobalSettings;
