@@ -98,37 +98,66 @@ public class UserServices : Service<User>, IUserServices
     {
         try
         {
-            _logger.LogInformation("Creating user: {Email}", request.Email);
+            _logger.LogInformation(
+                "User creation attempt for {Email}, Name: {FirstName} {LastName}",
+                request.Email,
+                request.FirstName,
+                request.LastName
+            );
 
+            // 1. Validate request
             var validatorResult = await _validator.ValidateAsync(request);
-
             if (!validatorResult.IsValid)
             {
                 var errors = string.Join(", ", validatorResult.Errors.Select(e => e.ErrorMessage));
-
+                _logger.LogWarning(
+                    "User creation validation failed for {Email}. Errors: {ValidationErrors}",
+                    request.Email,
+                    errors
+                );
                 return ApiResult<bool>.Error(errors, 400);
             }
 
+            // 2. Check if user already exists
             var user = await GetUserByEmail(request.Email);
-
             if (user != null)
+            {
+                _logger.LogWarning(
+                    "User creation failed: Email {Email} already exists",
+                    request.Email
+                );
                 return ApiResult<bool>.Error("User already exists", 409);
+            }
 
-            var newUser = request.Adapt<User>();
-            newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            // 3. Create user entity
+            var userToCreate = request.Adapt<User>();
+            userToCreate.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            Insert(newUser);
+            // 4. Set audit fields
+            userToCreate.CreatedAt = DateTime.UtcNow;
+            userToCreate.UpdatedAt = DateTime.UtcNow;
+            userToCreate.IsActive = true;
 
-            await _unitOfwork.SaveChangesAsync(); // **
+            // 5. Persist to database
+            Insert(userToCreate);
+            await _unitOfwork.SaveChangesAsync();
 
-            _logger.LogInformation("User created successfully: {Email}", request.Email);
+            _logger.LogInformation(
+                "User created successfully: {Email}, UserId: {UserId}",
+                request.Email,
+                userToCreate.Id
+            );
 
             return ApiResult<bool>.Success(true, "User created successfully", 201);
         }
+        catch (DbUpdateException dbEx)
+        {
+            _logger.LogError(dbEx, "Database error creating user {Email}", request.Email);
+            return ApiResult<bool>.Error("Database error occurred", 500);
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating user: {Email}", request.Email);
-
+            _logger.LogError(ex, "Unexpected error creating user {Email}", request.Email);
             return ApiResult<bool>.Error($"Error creating user: {ex.Message}", 500);
         }
     }

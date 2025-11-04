@@ -12,6 +12,8 @@ Log.Logger = new LoggerConfiguration()
         rollingInterval: RollingInterval.Day,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
     )
+    .WriteTo.Seq("http://localhost:5341")
+    .Enrich.FromLogContext()
     .CreateLogger();
 
 builder.Host.UseSerilog();
