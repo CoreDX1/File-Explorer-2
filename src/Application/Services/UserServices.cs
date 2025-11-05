@@ -65,9 +65,13 @@ public class UserServices : Service<User>, IUserServices
 
     public async Task<ApiResult<LoginResponse>> Login(string email, string password)
     {
+        _logger.LogInformation("El usuario se esta logeando {Email}", email);
+
         var user = await GetUserByEmail(email);
+
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
+            _logger.LogInformation("Credenciales invalidas");
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
 
@@ -94,7 +98,7 @@ public class UserServices : Service<User>, IUserServices
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
-    public async Task<ApiResult<bool>> CreateUserAsync(CreateUserRequest request)
+    public async Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request)
     {
         try
         {
@@ -115,7 +119,7 @@ public class UserServices : Service<User>, IUserServices
                     request.Email,
                     errors
                 );
-                return ApiResult<bool>.Error(errors, 400);
+                return ApiResult<LoginResponse>.Error(errors, 400);
             }
 
             // 2. Check if user already exists
@@ -126,7 +130,7 @@ public class UserServices : Service<User>, IUserServices
                     "User creation failed: Email {Email} already exists",
                     request.Email
                 );
-                return ApiResult<bool>.Error("User already exists", 409);
+                return ApiResult<LoginResponse>.Error("User already exists", 409);
             }
 
             // 3. Create user entity
@@ -136,11 +140,22 @@ public class UserServices : Service<User>, IUserServices
             // 4. Set audit fields
             userToCreate.CreatedAt = DateTime.UtcNow;
             userToCreate.UpdatedAt = DateTime.UtcNow;
-            userToCreate.IsActive = true;
+            userToCreate.IsActive = false;
 
             // 5. Persist to database
             Insert(userToCreate);
             await _unitOfwork.SaveChangesAsync();
+
+            // 6. Generate JWT token for automatic login
+            var token = _jwtTokenService.GenerateToken(
+                userToCreate.Id.ToString(),
+                userToCreate.Email,
+                "User"
+            );
+
+            var response = userToCreate.Adapt<LoginResponse>();
+
+            response.Token = token;
 
             _logger.LogInformation(
                 "User created successfully: {Email}, UserId: {UserId}",
@@ -148,17 +163,17 @@ public class UserServices : Service<User>, IUserServices
                 userToCreate.Id
             );
 
-            return ApiResult<bool>.Success(true, "User created successfully", 201);
+            return ApiResult<LoginResponse>.Success(response, "User created successfully", 201);
         }
         catch (DbUpdateException dbEx)
         {
             _logger.LogError(dbEx, "Database error creating user {Email}", request.Email);
-            return ApiResult<bool>.Error("Database error occurred", 500);
+            return ApiResult<LoginResponse>.Error("Database error occurred", 500);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error creating user {Email}", request.Email);
-            return ApiResult<bool>.Error($"Error creating user: {ex.Message}", 500);
+            return ApiResult<LoginResponse>.Error($"Error creating user: {ex.Message}", 500);
         }
     }
 

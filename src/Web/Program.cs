@@ -1,16 +1,30 @@
 using Application;
+using Application.Configuration;
 using Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Log.Logger = new LoggerConfiguration()
+//     .WriteTo.Console()
+//     .WriteTo.File(
+//         path: "logs/log-.txt",
+//         rollingInterval: RollingInterval.Day,
+//         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+//     )
+//     .WriteTo.Seq("http://localhost:5341")
+//     .Enrich.FromLogContext()
+//     .CreateLogger();
+
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(
+        outputTemplate: "[{RequestId}] {Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+    )
     .WriteTo.File(
         path: "logs/log-.txt",
         rollingInterval: RollingInterval.Day,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+        outputTemplate: "[{RequestId}] {Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
     )
     .WriteTo.Seq("http://localhost:5341")
     .Enrich.FromLogContext()
@@ -37,6 +51,17 @@ builder.Services.AddCors(options =>
     );
 });
 
+// Bind JWT settings with validation
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+var jwtSettings =
+    builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+    ?? throw new InvalidOperationException(
+        "JwtSettings configuration is missing in appsettings.json"
+    );
+
+if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) || jwtSettings.SecretKey.Length < 32)
+    throw new InvalidOperationException("JWT SecretKey must be at least 32 characters long");
+
 // Add authentication
 builder
     .Services.AddAuthentication("Bearer")
@@ -50,14 +75,12 @@ builder
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    System.Text.Encoding.UTF8.GetBytes(
-                        "your-super-secret-key-that-is-at-least-32-characters-long!"
-                    )
+                    System.Text.Encoding.UTF8.GetBytes(jwtSettings.SecretKey)
                 ),
                 ValidateIssuer = true,
-                ValidIssuer = "FileExplorer",
+                ValidIssuer = jwtSettings.Issuer,
                 ValidateAudience = true,
-                ValidAudience = "FileExplorerUsers",
+                ValidAudience = jwtSettings.Audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero,
             };
@@ -74,6 +97,8 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddSwaggerGen(); // ← Importante: registra Swagger Gen
 
 var app = builder.Build();
+
+app.UseMiddleware<Web.Middleware.RequestIdMiddleware>();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

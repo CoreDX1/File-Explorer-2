@@ -18,7 +18,7 @@ public interface IUserServices : IService<User>
     // New methods for AuthController
     Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password);
     Task<ApiResult<bool>> EditUser(EditUserRequest user);
-    Task<ApiResult<bool>> CreateUserAsync(CreateUserRequest request);
+    Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request);
     Task<ApiResult<object>> RefreshTokenAsync(string refreshToken);
     Task RevokeTokenAsync(string refreshToken);
     Task<ApiResult<object>> GoogleAuthAsync(string idToken);
