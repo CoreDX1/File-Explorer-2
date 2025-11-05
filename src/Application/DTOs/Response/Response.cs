@@ -15,6 +15,14 @@ public class ApiResult<T>
         };
     }
 
+    public static ApiResult<T> Success(string message, int code)
+    {
+        return new ApiResult<T>
+        {
+            Metadata = new ResponseMetadata { Message = message, StatusCode = code },
+        };
+    }
+
     public static ApiResult<T> Error(string message, int code)
     {
         return new ApiResult<T>

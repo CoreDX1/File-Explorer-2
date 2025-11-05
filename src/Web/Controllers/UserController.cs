@@ -26,22 +26,22 @@ public class UserController : ControllerBase
         return Ok(users);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
-    {
-        await _userServices.CreateUser(user);
-        await _unitOfWorkAsync.SaveChangesAsync();
-        return Ok(user);
-    }
+    // [HttpPost]
+    // public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest user)
+    // {
+    //     await _userServices.CreateUser(user);
+    //     await _unitOfWorkAsync.SaveChangesAsync();
+    //     return Ok(user);
+    // }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        var response = await _userServices.Login(request.Email, request.Password);
-        if (!response.Metadata.StatusCode.Equals(200))
-        {
-            return Unauthorized(response);
-        }
-        return Ok(response);
-    }
+    // [HttpPost("login")]
+    // public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    // {
+    //     var response = await _userServices.Login(request.Email, request.Password);
+    //     if (!response.Metadata.StatusCode.Equals(200))
+    //     {
+    //         return Unauthorized(response);
+    //     }
+    //     return Ok(response);
+    // }
 }

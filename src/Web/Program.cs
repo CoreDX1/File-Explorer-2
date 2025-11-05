@@ -1,8 +1,36 @@
 using Application;
+using Application.Configuration;
 using Infrastructure;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Log.Logger = new LoggerConfiguration()
+//     .WriteTo.Console()
+//     .WriteTo.File(
+//         path: "logs/log-.txt",
+//         rollingInterval: RollingInterval.Day,
+//         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+//     )
+//     .WriteTo.Seq("http://localhost:5341")
+//     .Enrich.FromLogContext()
+//     .CreateLogger();
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(
+        outputTemplate: "[{RequestId}] {Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+    )
+    .WriteTo.File(
+        path: "logs/log-.txt",
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "[{RequestId}] {Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+    )
+    .WriteTo.Seq("http://localhost:5341")
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -23,24 +51,41 @@ builder.Services.AddCors(options =>
     );
 });
 
+// Bind JWT settings with validation
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+var jwtSettings =
+    builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+    ?? throw new InvalidOperationException(
+        "JwtSettings configuration is missing in appsettings.json"
+    );
+
+if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) || jwtSettings.SecretKey.Length < 32)
+    throw new InvalidOperationException("JWT SecretKey must be at least 32 characters long");
+
 // Add authentication
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.RequireHttpsMetadata = false;
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters
+builder
+    .Services.AddAuthentication("Bearer")
+    .AddJwtBearer(
+        "Bearer",
+        options =>
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("your-super-secret-key-that-is-at-least-32-characters-long!")),
-            ValidateIssuer = true,
-            ValidIssuer = "FileExplorer",
-            ValidateAudience = true,
-            ValidAudience = "FileExplorerUsers",
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    System.Text.Encoding.UTF8.GetBytes(jwtSettings.SecretKey)
+                ),
+                ValidateIssuer = true,
+                ValidIssuer = jwtSettings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = jwtSettings.Audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero,
+            };
+        }
+    );
 
 // Add application and infrastructure services
 builder.Services.AddApplicationServices();
@@ -52,6 +97,8 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddSwaggerGen(); // ← Importante: registra Swagger Gen
 
 var app = builder.Build();
+
+app.UseMiddleware<Web.Middleware.RequestIdMiddleware>();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

@@ -3,20 +3,34 @@ using Application.DTOs.Response;
 using Application.Interface;
 using Application.Services;
 using Domain.Entities;
+using FluentValidation;
 using Infrastructure.Interface;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
 public class UserServices : Service<User>, IUserServices
 {
+    private readonly ILogger<UserServices> _logger;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IUnitOfWorkAsync _unitOfwork;
+    private readonly IValidator<CreateUserRequest> _validator;
 
-    public UserServices(IRepositoryAsync<User> repository, IJwtTokenService jwtTokenService)
+    public UserServices(
+        IRepositoryAsync<User> repository,
+        IJwtTokenService jwtTokenService,
+        IUnitOfWorkAsync unitOfwork,
+        IValidator<CreateUserRequest> validator,
+        ILogger<UserServices> logger
+    )
         : base(repository)
     {
         _jwtTokenService = jwtTokenService;
+        _unitOfwork = unitOfwork;
+        _validator = validator;
+        _logger = logger;
     }
 
     public async Task<List<User>> GetAllUsers()
@@ -29,59 +43,152 @@ public class UserServices : Service<User>, IUserServices
         return await Queryable().FirstOrDefaultAsync(u => u.Email == email);
     }
 
-    public async Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request)
-    {
-        var user = request.Adapt<User>();
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+    // public async Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request)
+    // {
+    //     var existingEmail = await GetUserByEmail(request.Email);
 
-        Insert(user);
+    //     if (existingEmail == null)
+    //     {
+    //         return ApiResult<CreateUserResponse>.Error("Error", 401);
+    //     }
 
-        var userMapper = user.Adapt<CreateUserResponse>();
+    //     var user = request.Adapt<User>();
+    //     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        return ApiResult<CreateUserResponse>.Success(userMapper, "User created successfully", 201);
-    }
+    //     Insert(user);
+    //     await _unitOfwork.SaveChangesAsync();
 
-    public async Task<ApiResult<LoginResponse>> Login(string email, string password)
-    {
-        var user = await GetUserByEmail(email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-        {
-            return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
-        }
+    //     var userMapper = user.Adapt<CreateUserResponse>();
 
-        var userMapper = user.Adapt<LoginResponse>();
+    //     return ApiResult<CreateUserResponse>.Success(userMapper, "User created successfully", 201);
+    // }
 
-        user.LastLoginAt = DateTime.UtcNow;
-        Update(user);
+    // public async Task<ApiResult<LoginResponse>> Login(string email, string password)
+    // {
+    //     _logger.LogInformation("El usuario se esta logeando {Email}", email);
 
-        return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
-    }
+    //     var user = await GetUserByEmail(email);
+
+    //     if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+    //     {
+    //         _logger.LogInformation("Credenciales invalidas");
+    //         return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
+    //     }
+
+    //     var userMapper = user.Adapt<LoginResponse>();
+
+    //     user.LastLoginAt = DateTime.UtcNow;
+    //     Update(user);
+
+    //     return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
+    // }
 
     public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
     {
+        _logger.LogInformation("Authentication attempt for {Email}", email);
+
         var user = await GetUserByEmail(email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
+            _logger.LogWarning("Authentication failed: Invalid credentials for {Email}", email);
+
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
 
         var token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
+
+        Update(user);
+        await _unitOfwork.SaveChangesAsync();
+
         var userMapper = user.Adapt<LoginResponse>();
         userMapper.Token = token;
+
+        _logger.LogInformation(
+            "User authenticated successfully: {Email}, UserId: {UserId}",
+            email,
+            user.Id
+        );
 
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
-    public async Task<ApiResult<object>> CreateUserAsync(CreateUserRequest request)
+    public async Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request)
     {
-        var user = await GetUserByEmail(request.Email);
-        if (user != null)
-            return ApiResult<object>.Error("User already exists", 400);
+        try
+        {
+            _logger.LogInformation(
+                "User creation attempt for {Email}, Name: {FirstName} {LastName}",
+                request.Email,
+                request.FirstName,
+                request.LastName
+            );
 
-        var newUser = request.Adapt<User>();
-        newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        Insert(newUser);
-        return ApiResult<object>.Success(null, "User created successfully", 201);
+            // 1. Validate request
+            var validatorResult = await _validator.ValidateAsync(request);
+            if (!validatorResult.IsValid)
+            {
+                var errors = string.Join(", ", validatorResult.Errors.Select(e => e.ErrorMessage));
+                _logger.LogWarning(
+                    "User creation validation failed for {Email}. Errors: {ValidationErrors}",
+                    request.Email,
+                    errors
+                );
+                return ApiResult<LoginResponse>.Error(errors, 400);
+            }
+
+            // 2. Check if user already exists
+            var user = await GetUserByEmail(request.Email);
+            if (user != null)
+            {
+                _logger.LogWarning(
+                    "User creation failed: Email {Email} already exists",
+                    request.Email
+                );
+                return ApiResult<LoginResponse>.Error("User already exists", 409);
+            }
+
+            // 3. Create user entity
+            var userToCreate = request.Adapt<User>();
+            userToCreate.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            // 4. Set audit fields
+            userToCreate.CreatedAt = DateTime.UtcNow;
+            userToCreate.UpdatedAt = DateTime.UtcNow;
+            userToCreate.IsActive = false;
+
+            // 5. Persist to database
+            Insert(userToCreate);
+            await _unitOfwork.SaveChangesAsync();
+
+            // 6. Generate JWT token for automatic login
+            var token = _jwtTokenService.GenerateToken(
+                userToCreate.Id.ToString(),
+                userToCreate.Email,
+                "User"
+            );
+
+            var response = userToCreate.Adapt<LoginResponse>();
+
+            response.Token = token;
+
+            _logger.LogInformation(
+                "User created successfully: {Email}, UserId: {UserId}",
+                request.Email,
+                userToCreate.Id
+            );
+
+            return ApiResult<LoginResponse>.Success(response, "User created successfully", 201);
+        }
+        catch (DbUpdateException dbEx)
+        {
+            _logger.LogError(dbEx, "Database error creating user {Email}", request.Email);
+            return ApiResult<LoginResponse>.Error("Database error occurred", 500);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating user {Email}", request.Email);
+            return ApiResult<LoginResponse>.Error($"Error creating user: {ex.Message}", 500);
+        }
     }
 
     public Task<ApiResult<object>> RefreshTokenAsync(string refreshToken)
@@ -102,5 +209,27 @@ public class UserServices : Service<User>, IUserServices
     public Task SendPasswordResetAsync(string email)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<ApiResult<bool>> EditUser(EditUserRequest userRequest)
+    {
+        try
+        {
+            var existingUser = await GetUserByEmail(userRequest.Email);
+            if (existingUser == null)
+            {
+                return ApiResult<bool>.Error("User not found", 404);
+            }
+
+            var userEdit = userRequest.Adapt<User>();
+            Update(userEdit);
+            await _unitOfwork.SaveChangesAsync();
+
+            return ApiResult<bool>.Success(true, "User Edit", 200);
+        }
+        catch (Exception ex)
+        {
+            return ApiResult<bool>.Error($"Error updating user: {ex.Message}", 500);
+        }
     }
 }

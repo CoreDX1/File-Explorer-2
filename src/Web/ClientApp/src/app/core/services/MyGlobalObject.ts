@@ -17,7 +17,7 @@ export class MyGlobalObject {
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
-  public setUserData(user: LoginResponse): void {
+  public setUserData(user: LoginResponse | Data): void {
     this.user = {
       firstName: user.firstName,
       email: user.email,
@@ -29,6 +29,7 @@ export class MyGlobalObject {
       localStorage.setItem(this.USER_KEY, JSON.stringify(this.user));
     }
   }
+
   public getUserData(): Data {
     if (isPlatformBrowser(this.platformId)) {
       const userJson: string | null = localStorage.getItem(this.USER_KEY);

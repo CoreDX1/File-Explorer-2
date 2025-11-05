@@ -18,7 +18,7 @@ public class FileExplorerDbContext : DbContext
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
             entity.Property(e => e.PasswordHash).IsRequired();
-            entity.Property(e => e.FullName).HasMaxLength(100);
+            entity.Ignore(e => e.FullName);
             entity.Property(e => e.StorageQuotaBytes).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();

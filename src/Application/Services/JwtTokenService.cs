@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Application.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Application.Services;
@@ -13,20 +15,22 @@ public interface IJwtTokenService
 
 public class JwtTokenService : IJwtTokenService
 {
-    private readonly string _secretKey;
-    private readonly string _issuer;
-    private readonly string _audience;
+    // private readonly string _secretKey;
+    // private readonly string _issuer;
+    // private readonly string _audience;
 
-    public JwtTokenService()
+    private readonly JwtSettings _jwtSettings;
+
+    public JwtTokenService(IOptions<JwtSettings> jwtSettings)
     {
-        _secretKey = "your-super-secret-key-that-is-at-least-32-characters-long!";
-        _issuer = "FileExplorer";
-        _audience = "FileExplorerUsers";
+        _jwtSettings = jwtSettings.Value;
+        if (string.IsNullOrWhiteSpace(_jwtSettings.SecretKey) || _jwtSettings.SecretKey.Length < 32)
+            throw new ArgumentException("JWT SecretKey must be at least 32 characters long");
     }
 
     public string GenerateToken(string userId, string email, string role = "User")
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -43,10 +47,10 @@ public class JwtTokenService : IJwtTokenService
         };
 
         var token = new JwtSecurityToken(
-            issuer: _issuer,
-            audience: _audience,
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(24),
+            expires: DateTime.UtcNow.AddHours(_jwtSettings.ExpirationHours),
             signingCredentials: credentials
         );
 
@@ -57,7 +61,7 @@ public class JwtTokenService : IJwtTokenService
     {
         try
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var validationParameters = new TokenValidationParameters
@@ -65,9 +69,9 @@ public class JwtTokenService : IJwtTokenService
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = key,
                 ValidateIssuer = true,
-                ValidIssuer = _issuer,
+                ValidIssuer = _jwtSettings.Issuer,
                 ValidateAudience = true,
-                ValidAudience = _audience,
+                ValidAudience = _jwtSettings.Audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero,
             };
