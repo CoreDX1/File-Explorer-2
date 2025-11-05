@@ -63,37 +63,51 @@ public class UserServices : Service<User>, IUserServices
     //     return ApiResult<CreateUserResponse>.Success(userMapper, "User created successfully", 201);
     // }
 
-    public async Task<ApiResult<LoginResponse>> Login(string email, string password)
-    {
-        _logger.LogInformation("El usuario se esta logeando {Email}", email);
+    // public async Task<ApiResult<LoginResponse>> Login(string email, string password)
+    // {
+    //     _logger.LogInformation("El usuario se esta logeando {Email}", email);
 
-        var user = await GetUserByEmail(email);
+    //     var user = await GetUserByEmail(email);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-        {
-            _logger.LogInformation("Credenciales invalidas");
-            return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
-        }
+    //     if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+    //     {
+    //         _logger.LogInformation("Credenciales invalidas");
+    //         return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
+    //     }
 
-        var userMapper = user.Adapt<LoginResponse>();
+    //     var userMapper = user.Adapt<LoginResponse>();
 
-        user.LastLoginAt = DateTime.UtcNow;
-        Update(user);
+    //     user.LastLoginAt = DateTime.UtcNow;
+    //     Update(user);
 
-        return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
-    }
+    //     return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
+    // }
 
     public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
     {
+        _logger.LogInformation("Authentication attempt for {Email}", email);
+
         var user = await GetUserByEmail(email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
+            _logger.LogWarning("Authentication failed: Invalid credentials for {Email}", email);
+
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
 
         var token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
+
+        Update(user);
+        await _unitOfwork.SaveChangesAsync();
+
         var userMapper = user.Adapt<LoginResponse>();
         userMapper.Token = token;
+
+        _logger.LogInformation(
+            "User authenticated successfully: {Email}, UserId: {UserId}",
+            email,
+            user.Id
+        );
 
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }

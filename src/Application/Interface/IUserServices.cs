@@ -13,7 +13,7 @@ public interface IUserServices : IService<User>
     public Task<List<User>> GetAllUsers();
 
     // public Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request);
-    public Task<ApiResult<LoginResponse>> Login(string email, string password);
+    // public Task<ApiResult<LoginResponse>> Login(string email, string password);
 
     // New methods for AuthController
     Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password);
