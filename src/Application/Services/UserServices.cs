@@ -4,6 +4,7 @@ using Application.Interface;
 using Application.Services;
 using Domain.Entities;
 using FluentValidation;
+using FluentValidation.Results;
 using Infrastructure.Interface;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ public class UserServices : Service<User>, IUserServices
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWorkAsync _unitOfwork;
     private readonly IValidator<CreateUserRequest> _validator;
+    private readonly LockoutOptions _lockoutOptions = new();
 
     public UserServices(
         IRepositoryAsync<User> repository,
@@ -38,7 +40,7 @@ public class UserServices : Service<User>, IUserServices
         return await Queryable().ToListAsync();
     }
 
-    public async Task<User> GetUserByEmail(string email)
+    public async Task<User> FindByEmailAsync(string email)
     {
         return await Queryable().FirstOrDefaultAsync(u => u.Email == email);
     }
@@ -87,20 +89,84 @@ public class UserServices : Service<User>, IUserServices
     {
         _logger.LogInformation("Authentication attempt for {Email}", email);
 
-        var user = await GetUserByEmail(email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        User user = await FindByEmailAsync(email);
+
+        if (user == null)
         {
             _logger.LogWarning("Authentication failed: Invalid credentials for {Email}", email);
-
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
 
-        var token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
+        // Check if user is currently locked out
+        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+        {
+            _logger.LogWarning(
+                "Authentication blocked: User {Email} is locked until {LockoutEnd}",
+                email,
+                user.LockoutEnd.Value
+            );
+
+            return ApiResult<LoginResponse>.Error("User is locked. Try again later.", 403);
+        }
+
+        // Validate password
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            user.FailedLoginAttemts++;
+
+            if (user.FailedLoginAttemts >= _lockoutOptions.MaxFailedAccessAttempts)
+            {
+                user.LockoutEnd = DateTime.UtcNow.Add(_lockoutOptions.DefaultLockoutTimeSpan);
+                _logger.LogWarning(
+                    "User {Email} locked out until {LockoutEnd} after {Attempts} failed attempts",
+                    email,
+                    user.LockoutEnd.Value,
+                    user.FailedLoginAttemts
+                );
+
+                Update(user);
+                await _unitOfwork.SaveChangesAsync();
+
+                // Usuario ya quedó bloqueado: informamos lockout con intento final
+                return ApiResult<LoginResponse>.Error(
+                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}. Try again later.",
+                    403
+                );
+            }
+            else
+            {
+                int remainingAttempts =
+                    _lockoutOptions.MaxFailedAccessAttempts - user.FailedLoginAttemts;
+
+                _logger.LogWarning(
+                    "Authentication failed: Invalid password for {Email}. Failed attempts: {Attempts}, Remaining before lockout: {Remaining}",
+                    email,
+                    user.FailedLoginAttemts,
+                    remainingAttempts
+                );
+
+                Update(user);
+                await _unitOfwork.SaveChangesAsync();
+
+                // Mensaje incluye en qué intento estás y cuántos tienes en total
+                return ApiResult<LoginResponse>.Error(
+                    $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}.",
+                    401
+                );
+            }
+        }
+
+        // Successful authentication: reset counters
+        user.FailedLoginAttemts = 0;
+        user.LockoutEnd = null;
+        user.LastLoginAt = DateTime.UtcNow;
+
+        string token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
 
         Update(user);
         await _unitOfwork.SaveChangesAsync();
 
-        var userMapper = user.Adapt<LoginResponse>();
+        LoginResponse userMapper = user.Adapt<LoginResponse>();
         userMapper.Token = token;
 
         _logger.LogInformation(
@@ -124,7 +190,8 @@ public class UserServices : Service<User>, IUserServices
             );
 
             // 1. Validate request
-            var validatorResult = await _validator.ValidateAsync(request);
+            ValidationResult validatorResult = await _validator.ValidateAsync(request);
+
             if (!validatorResult.IsValid)
             {
                 var errors = string.Join(", ", validatorResult.Errors.Select(e => e.ErrorMessage));
@@ -137,7 +204,7 @@ public class UserServices : Service<User>, IUserServices
             }
 
             // 2. Check if user already exists
-            var user = await GetUserByEmail(request.Email);
+            User user = await FindByEmailAsync(request.Email);
             if (user != null)
             {
                 _logger.LogWarning(
@@ -148,7 +215,7 @@ public class UserServices : Service<User>, IUserServices
             }
 
             // 3. Create user entity
-            var userToCreate = request.Adapt<User>();
+            User userToCreate = request.Adapt<User>();
             userToCreate.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             // 4. Set audit fields
@@ -161,13 +228,13 @@ public class UserServices : Service<User>, IUserServices
             await _unitOfwork.SaveChangesAsync();
 
             // 6. Generate JWT token for automatic login
-            var token = _jwtTokenService.GenerateToken(
+            string token = _jwtTokenService.GenerateToken(
                 userToCreate.Id.ToString(),
                 userToCreate.Email,
                 "User"
             );
 
-            var response = userToCreate.Adapt<LoginResponse>();
+            LoginResponse response = userToCreate.Adapt<LoginResponse>();
 
             response.Token = token;
 
@@ -215,7 +282,7 @@ public class UserServices : Service<User>, IUserServices
     {
         try
         {
-            var existingUser = await GetUserByEmail(userRequest.Email);
+            var existingUser = await FindByEmailAsync(userRequest.Email);
             if (existingUser == null)
             {
                 return ApiResult<bool>.Error("User not found", 404);

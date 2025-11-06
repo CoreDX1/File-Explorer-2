@@ -11,10 +11,19 @@ public class User : Entity
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 
+    public int FailedLoginAttemts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
     public long StorageQuotaBytes { get; set; } = 5368709120; // 5 GB default quota
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime LastLoginAt { get; set; }
+}
+
+public class LockoutOptions
+{
+    public bool AllowebForNewUser { get; set; } = true;
+    public int MaxFailedAccessAttempts { get; set; } = 5;
+    public TimeSpan DefaultLockoutTimeSpan { get; set; } = TimeSpan.FromMinutes(5.0);
 }
