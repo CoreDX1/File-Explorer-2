@@ -10,7 +10,7 @@ namespace Application.Interface;
 public interface IUserServices : IService<User>
 {
     public Task<User> FindByEmailAsync(string email);
-    public Task<List<User>> GetAllUsers();
+    public Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync();
 
     // public Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request);
     // public Task<ApiResult<LoginResponse>> Login(string email, string password);

@@ -35,55 +35,35 @@ public class UserServices : Service<User>, IUserServices
         _logger = logger;
     }
 
-    public async Task<List<User>> GetAllUsers()
+    public async Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync()
     {
-        return await Queryable().ToListAsync();
+        try
+        {
+            var query = Queryable().AsNoTracking().OrderBy(u => u.Id);
+
+            var users = await query.ToListAsync();
+
+            var dto = users.Adapt<List<GetUserResponse>>();
+
+            _logger.LogInformation("Retrieved {Count} users", dto.Count);
+
+            return ApiResult<List<GetUserResponse>>.Success(
+                dto,
+                "Users retrieved successfully",
+                200
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving users");
+            return ApiResult<List<GetUserResponse>>.Error("Error retrieving users", 500);
+        }
     }
 
     public async Task<User> FindByEmailAsync(string email)
     {
         return await Queryable().FirstOrDefaultAsync(u => u.Email == email);
     }
-
-    // public async Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request)
-    // {
-    //     var existingEmail = await GetUserByEmail(request.Email);
-
-    //     if (existingEmail == null)
-    //     {
-    //         return ApiResult<CreateUserResponse>.Error("Error", 401);
-    //     }
-
-    //     var user = request.Adapt<User>();
-    //     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-    //     Insert(user);
-    //     await _unitOfwork.SaveChangesAsync();
-
-    //     var userMapper = user.Adapt<CreateUserResponse>();
-
-    //     return ApiResult<CreateUserResponse>.Success(userMapper, "User created successfully", 201);
-    // }
-
-    // public async Task<ApiResult<LoginResponse>> Login(string email, string password)
-    // {
-    //     _logger.LogInformation("El usuario se esta logeando {Email}", email);
-
-    //     var user = await GetUserByEmail(email);
-
-    //     if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-    //     {
-    //         _logger.LogInformation("Credenciales invalidas");
-    //         return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
-    //     }
-
-    //     var userMapper = user.Adapt<LoginResponse>();
-
-    //     user.LastLoginAt = DateTime.UtcNow;
-    //     Update(user);
-
-    //     return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
-    // }
 
     public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
     {
