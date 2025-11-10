@@ -1,6 +1,7 @@
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Domain.Entities;
+using Domain.Monads;
 
 namespace Application.Interface;
 
@@ -9,7 +10,7 @@ namespace Application.Interface;
 /// </summary>
 public interface IUserServices : IService<User>
 {
-    public Task<User> FindByEmailAsync(string email);
+    public Task<Maybe<User>> FindByEmailAsync(string email);
     public Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync();
 
     // public Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request);

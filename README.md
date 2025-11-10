@@ -83,3 +83,9 @@ El proyecto sigue una arquitectura por capas (Layered Architecture), comúnmente
 - Faltaria agregar el token refresh
 - Bloquear la cuenta de usuarioa cuando haya fallado los intentos de iniciar sesion
 - 
+
+# Investigar
+
+- AggressiveInlining
+- overhead 
+- compilador JIT 

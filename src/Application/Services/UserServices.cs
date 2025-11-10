@@ -1,8 +1,8 @@
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interface;
-using Application.Services;
 using Domain.Entities;
+using Domain.Monads;
 using FluentValidation;
 using FluentValidation.Results;
 using Infrastructure.Interface;
@@ -60,16 +60,18 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
-    public async Task<User> FindByEmailAsync(string email)
+    public async Task<Maybe<User>> FindByEmailAsync(string email)
     {
-        return await Queryable().FirstOrDefaultAsync(u => u.Email == email);
+        var user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
+        return Maybe.From(user);
     }
 
     public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
     {
         _logger.LogInformation("Authentication attempt for {Email}", email);
 
-        User user = await FindByEmailAsync(email);
+        var maybeUser = await FindByEmailAsync(email);
+        User? user = maybeUser.Value;
 
         if (user == null)
         {
@@ -158,6 +160,16 @@ public class UserServices : Service<User>, IUserServices
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
+    private static bool ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request)
     {
         try
@@ -184,8 +196,8 @@ public class UserServices : Service<User>, IUserServices
             }
 
             // 2. Check if user already exists
-            User user = await FindByEmailAsync(request.Email);
-            if (user != null)
+            var maybeUser = await FindByEmailAsync(request.Email);
+            if (maybeUser.IsSome)
             {
                 _logger.LogWarning(
                     "User creation failed: Email {Email} already exists",
@@ -262,8 +274,9 @@ public class UserServices : Service<User>, IUserServices
     {
         try
         {
-            var existingUser = await FindByEmailAsync(userRequest.Email);
-            if (existingUser == null)
+            var maybeUser = await FindByEmailAsync(userRequest.Email);
+
+            if (maybeUser.IsNone)
             {
                 return ApiResult<bool>.Error("User not found", 404);
             }
