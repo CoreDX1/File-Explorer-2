@@ -79,7 +79,7 @@ public class UserServices : Service<User>, IUserServices
 
     public async Task<Maybe<User>> FindByEmailAsync(string email)
     {
-        var user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
+        User? user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
         return Maybe.From(user);
     }
 
@@ -87,19 +87,19 @@ public class UserServices : Service<User>, IUserServices
     {
         _logger.LogInformation("Authentication attempt for {Email}", email);
 
-        var maybeUser = await FindByEmailAsync(email);
+        Maybe<User> maybeUser = await FindByEmailAsync(email);
 
-        var demo = ValidateEmail(email)
-            .Bind(() => ValidatePassword(password))
-            .Map(_ => new CreateUserRequest(email, password));
-
-        User? user = maybeUser.Value;
-
-        if (user == null)
+        if (maybeUser.IsNone)
         {
             _logger.LogWarning("Authentication failed: Invalid credentials for {Email}", email);
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
+
+        // var demo = ValidateEmail(email)
+        //     .Bind(() => ValidatePassword(password))
+        //     .Map(_ => new CreateUserRequest(email, password));
+
+        User user = maybeUser.GetValueOrThrow();
 
         // Check if user is currently locked out
         if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
