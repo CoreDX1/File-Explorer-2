@@ -57,13 +57,13 @@ public readonly struct Result<T> : IResult<T>
         return IsSuccess ? binder() : new Result<TNew>(_error);
     }
 
-    public TResult Match<TResult>(Func<T, TResult> success, Func<Errors, TResult> failure) =>
-        IsSuccess ? success(_value) : failure(_error);
+    // public TResult Match<TResult>(Func<T, TResult> success, Func<Errors, TResult> failure) =>
+    //     IsSuccess ? success(_value) : failure(_error);
 
-    public Result<T> Ensure(Func<T, bool> predicate, Errors error) =>
-        IsFailure ? this
-        : predicate(_value) ? this
-        : new Result<T>(error);
+    // public Result<T> Ensure(Func<T, bool> predicate, Errors error) =>
+    //     IsFailure ? this
+    //     : predicate(_value) ? this
+    //     : new Result<T>(error);
 
     public Result<T> IfSuccess(Action<T> action)
     {
