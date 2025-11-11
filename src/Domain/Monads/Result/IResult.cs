@@ -1,6 +1,6 @@
-using Application.ValitMona.Error;
+using Domain.ValitMona.Error;
 
-namespace Application.ValitMona.Result;
+namespace Domain.Monads.Result;
 
 public interface IResult
 {

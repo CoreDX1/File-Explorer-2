@@ -10,6 +10,4 @@ public interface IMaybe
     bool IsNone { get; }
 }
 
-public interface IMaybe<in TValue> : IMaybe
-{
-}
+public interface IMaybe<in TValue> : IMaybe { }

@@ -3,6 +3,7 @@ using Application.DTOs.Response;
 using Application.Interface;
 using Domain.Entities;
 using Domain.Monads;
+using Domain.Monads.Result;
 using FluentValidation;
 using FluentValidation.Results;
 using Infrastructure.Interface;
@@ -60,6 +61,22 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
+    private Result<Unit> ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+            return Result.Failure<Unit>("Invalid email adress");
+
+        return Result.Unit;
+    }
+
+    private Result<Unit> ValidatePassword(string pass)
+    {
+        if (pass.Length < 8)
+            return Result.Failure<Unit>("Password must be at least 8 characters");
+
+        return Result.Unit;
+    }
+
     public async Task<Maybe<User>> FindByEmailAsync(string email)
     {
         var user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
@@ -71,6 +88,11 @@ public class UserServices : Service<User>, IUserServices
         _logger.LogInformation("Authentication attempt for {Email}", email);
 
         var maybeUser = await FindByEmailAsync(email);
+
+        var demo = ValidateEmail(email)
+            .Bind(() => ValidatePassword(password))
+            .Map(_ => new CreateUserRequest(email, password));
+
         User? user = maybeUser.Value;
 
         if (user == null)
@@ -158,16 +180,6 @@ public class UserServices : Service<User>, IUserServices
         );
 
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
-    }
-
-    private static bool ValidateEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return false;
-        }
-
-        return true;
     }
 
     public async Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request)
