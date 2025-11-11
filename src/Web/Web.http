@@ -1,6 +1,43 @@
 @Web_HostAddress = http://localhost:5252
 
-GET {{Web_HostAddress}}/weatherforecast/
+### Get all users (uses GetAllUsersAsync and GetUserResponse DTO)
+GET {{Web_HostAddress}}/api/User
 Accept: application/json
 
 ###
+
+### Login (AuthenticateAsync con lockout e intentos)
+POST {{Web_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "user@example.com",
+  "password": "wrong-password"
+}
+
+###
+
+### Register new user
+POST {{Web_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "email": "user@example.com",
+  "phone": "123456789",
+  "password": "P@ssword123"
+}
+
+###
+
+POST {{Web_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "user@example.com",
+  "password": "P@ssword123"
+}

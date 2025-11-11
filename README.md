@@ -71,11 +71,21 @@ El proyecto sigue una arquitectura por capas (Layered Architecture), comúnmente
 *   **Domain (Capa de Dominio):** Contiene las entidades y las reglas de negocio de la aplicación.
 
 ## Patrones de Diseño Utilizados
-
-*   **Dependency Injection (DI):** Utilizado extensivamente en el backend (.NET Core) para desacoplar componentes y facilitar la mantenibilidad y testabilidad. Se observa en la configuración de servicios en `Program.cs`.
+2nibilidad y testabilidad. Se observa en la configuración de servicios en `Program.cs`.
 *   **Model-View-Controller (MVC) / API Controllers:** El backend utiliza controladores para gestionar las solicitudes HTTP y las respuestas, siguiendo un patrón similar a MVC para las APIs.
 *   **Component-Based Architecture:** El frontend (Angular) está construido utilizando componentes reutilizables, un pilar fundamental de Angular.
 *   **Repository Pattern (probable):** Aunque no se ha inspeccionado directamente el código de la capa de infraestructura, es común que en arquitecturas de este tipo se utilice el patrón Repository para abstraer el acceso a datos.
 *   **Service Pattern (probable):** La capa de aplicación suele implementar servicios que encapsulan la lógica de negocio.
 
-111
+- - -
+
+# Implementacions faltantes
+- Faltaria agregar el token refresh
+- Bloquear la cuenta de usuarioa cuando haya fallado los intentos de iniciar sesion
+- 
+
+# Investigar
+
+- AggressiveInlining
+- overhead 
+- compilador JIT 

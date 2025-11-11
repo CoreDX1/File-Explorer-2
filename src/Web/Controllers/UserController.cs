@@ -22,8 +22,17 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        List<User> users = await _userServices.GetAllUsers();
-        return Ok(users);
+        var result = await _userServices.GetAllUsersAsync();
+
+        if (result.Metadata?.StatusCode != 200)
+        {
+            return StatusCode(
+                result.Metadata?.StatusCode ?? 500,
+                new { message = result.Metadata?.Message }
+            );
+        }
+
+        return Ok(result);
     }
 
     // [HttpPost]

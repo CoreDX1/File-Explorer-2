@@ -22,10 +22,26 @@ public class AuthController : ControllerBase
     {
         var result = await _userServices.AuthenticateAsync(request.Email, request.Password);
 
-        if (result.Metadata?.StatusCode != 200)
+        if (result.Metadata is null)
         {
-            _logger.LogWarning("Failed login attempt for: {Email}", request.Email);
-            return Unauthorized(new { message = "Invalid credentials" });
+            _logger.LogWarning("Login failed for {Email}: missing metadata", request.Email);
+            return StatusCode(500, new { message = "Unexpected error" });
+        }
+
+        // Propagar exactamente el código y mensaje definidos en el servicio
+        if (result.Metadata.StatusCode != 200)
+        {
+            _logger.LogWarning(
+                "Failed login attempt for {Email}. Status: {StatusCode}, Message: {Message}",
+                request.Email,
+                result.Metadata.StatusCode,
+                result.Metadata.Message
+            );
+
+            return StatusCode(
+                result.Metadata.StatusCode,
+                new { message = result.Metadata.Message }
+            );
         }
 
         return Ok(result);
