@@ -1,12 +1,12 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpClient } from "@angular/common/http";
+import { Injectable } from "@angular/core";
+import { Observable } from "rxjs";
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class UserServices {
-  private url: string = 'http://localhost:5252/api/v1';
+  private url: string = "http://localhost:5252/api/v1";
 
   constructor(private http: HttpClient) {}
 
@@ -14,7 +14,7 @@ export class UserServices {
     {
       return this.http.post<Response<LoginResponse>>(
         `${this.url}/auth/login`,
-        credential
+        credential,
       );
     }
   }

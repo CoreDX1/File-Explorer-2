@@ -36,6 +36,25 @@ public class UserServices : Service<User>, IUserServices
         _logger = logger;
     }
 
+    public async Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id)
+    {
+        User? user = await FindAsync(id);
+
+        GetUserResponseUnique userDto = new()
+        {
+            Email = user.Email,
+            FirstName = user.FirstName,
+            Id = user.Id,
+            LastName = user.LastName,
+            Phone = user.Phone
+        };
+
+        if (user == null)
+            return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
+
+        return ApiResult<GetUserResponseUnique>.Success(userDto, "El usuario se encontro", 200);
+    }
+
     public async Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync()
     {
         try
@@ -222,7 +241,7 @@ public class UserServices : Service<User>, IUserServices
             User userToCreate = request.Adapt<User>();
             userToCreate.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            // 4. Set audit fields
+
             userToCreate.CreatedAt = DateTime.UtcNow;
             userToCreate.UpdatedAt = DateTime.UtcNow;
             userToCreate.IsActive = false;
@@ -294,7 +313,9 @@ public class UserServices : Service<User>, IUserServices
             }
 
             var userEdit = userRequest.Adapt<User>();
+
             Update(userEdit);
+
             await _unitOfwork.SaveChangesAsync();
 
             return ApiResult<bool>.Success(true, "User Edit", 200);
