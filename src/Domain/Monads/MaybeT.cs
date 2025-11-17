@@ -8,9 +8,9 @@ public readonly struct Maybe<TValue> : IEquatable<Maybe<TValue>>
     public bool IsSome => Value is not null;
     public bool IsNone => Value is null;
     public static readonly Maybe<TValue> None = default;
-    public TValue? Value { get; }
+    public TValue Value { get; }
 
-    public Maybe(TValue? value) => Value = value;
+    public Maybe(TValue value) => Value = value;
 
     /// <summary>
     /// Obtiene el valor o lanza excepción si es None.

@@ -305,16 +305,22 @@ public class UserServices : Service<User>, IUserServices
     {
         try
         {
-            var maybeUser = await FindByEmailAsync(userRequest.Email);
+            Maybe<User> maybeUser = await FindAsync(userRequest.Id);
 
             if (maybeUser.IsNone)
             {
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
-            var userEdit = userRequest.Adapt<User>();
+            User user = maybeUser.Value;
 
-            Update(userEdit);
+            user.FirstName = userRequest.FirstName;
+            user.LastName = userRequest.LastName;
+            user.Phone = userRequest.Phone;
+            user.Email = userRequest.Email;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRequest.Password);
+
+            Update(user);
 
             await _unitOfwork.SaveChangesAsync();
 
