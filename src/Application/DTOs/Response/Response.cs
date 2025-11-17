@@ -30,11 +30,24 @@ public class ApiResult<T>
             Metadata = new ResponseMetadata { Message = message, StatusCode = code },
         };
     }
+
+    public static ApiResult<T> Error(string[] errors, int code)
+    {
+        return new ApiResult<T>
+        {
+            Metadata = new ResponseMetadata
+            {
+                Message = string.Join(", ", errors),
+                StatusCode = code,
+                Errors = errors,
+            },
+        };
+    }
 }
 
 public class ResponseMetadata
 {
     public int StatusCode { get; set; }
-
     public string? Message { get; set; }
+    public string[] Errors { get; set; } = [];
 }

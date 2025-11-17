@@ -99,10 +99,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Update([FromBody] EditUserRequest request)
     {
         var result = await _userServices.EditUser(request);
-        if (result.Metadata?.StatusCode != 200)
-            return BadRequest(new { message = result.Metadata?.Message });
-
-        return Ok(new { message = "Usuario Actualizado" });
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
@@ -111,7 +108,6 @@ public class AuthController : ControllerBase
         var result = await _userServices.FindByIdAsync(id);
         return Ok(result);
     }
-
 }
 
 public record RefreshTokenRequest(string RefreshToken);
