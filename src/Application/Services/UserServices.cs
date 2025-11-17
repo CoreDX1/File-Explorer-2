@@ -10,6 +10,7 @@ using Infrastructure.Interface;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using static Domain.Monads.Result.ResultExtensions;
 
 namespace Application.Services;
 
@@ -34,6 +35,25 @@ public class UserServices : Service<User>, IUserServices
         _unitOfwork = unitOfwork;
         _validator = validator;
         _logger = logger;
+    }
+
+    public async Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id)
+    {
+        User? user = await FindAsync(id);
+
+        GetUserResponseUnique userDto = new()
+        {
+            Email = user.Email,
+            FirstName = user.FirstName,
+            Id = user.Id,
+            LastName = user.LastName,
+            Phone = user.Phone,
+        };
+
+        if (user == null)
+            return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
+
+        return ApiResult<GetUserResponseUnique>.Success(userDto, "El usuario se encontro", 200);
     }
 
     public async Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync()
@@ -222,7 +242,6 @@ public class UserServices : Service<User>, IUserServices
             User userToCreate = request.Adapt<User>();
             userToCreate.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            // 4. Set audit fields
             userToCreate.CreatedAt = DateTime.UtcNow;
             userToCreate.UpdatedAt = DateTime.UtcNow;
             userToCreate.IsActive = false;
@@ -286,15 +305,38 @@ public class UserServices : Service<User>, IUserServices
     {
         try
         {
-            var maybeUser = await FindByEmailAsync(userRequest.Email);
+            string[] validation = GetErrors(
+                ValidateEmail(userRequest.Email),
+                ValidateId(userRequest.Id),
+                ValidatePassword(userRequest.Password),
+                ValidateFirstName(userRequest.FirstName)
+            );
+
+            if (validation.Length > 0)
+                return ApiResult<bool>.Error(validation, 400);
+
+            Maybe<User> maybeUser = await FindAsync(userRequest.Id);
 
             if (maybeUser.IsNone)
             {
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
-            var userEdit = userRequest.Adapt<User>();
-            Update(userEdit);
+            User user = maybeUser.Value;
+
+            if (await FindByEmailAsync(userRequest.Email) == null)
+            {
+                return ApiResult<bool>.Error("Email duplicado", 404);
+            }
+
+            user.FirstName = userRequest.FirstName;
+            user.LastName = userRequest.LastName;
+            user.Phone = userRequest.Phone;
+            user.Email = userRequest.Email;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRequest.Password);
+
+            Update(user);
+
             await _unitOfwork.SaveChangesAsync();
 
             return ApiResult<bool>.Success(true, "User Edit", 200);
@@ -302,6 +344,114 @@ public class UserServices : Service<User>, IUserServices
         catch (Exception ex)
         {
             return ApiResult<bool>.Error($"Error updating user: {ex.Message}", 500);
+        }
+    }
+
+    // Métodos de validación que devuelven Result<Unit>
+    private static Result<Unit> ValidateId(int id)
+    {
+        if (id <= 0)
+            return Result.Failure<Unit>("User ID must be greater than zero");
+
+        return Result.Unit;
+    }
+
+    private static Result<Unit> ValidateFirstName(string firstName)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+            return Result.Failure<Unit>("First name is required");
+
+        if (firstName.Length > 50)
+            return Result.Failure<Unit>("First name must not exceed 50 characters");
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(firstName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+            return Result.Failure<Unit>("First name can only contain letters");
+
+        return Result.Unit;
+    }
+
+    private static Result<Unit> ValidateLastName(string lastName)
+    {
+        if (string.IsNullOrWhiteSpace(lastName))
+            return Result.Failure<Unit>("Last name is required");
+
+        if (lastName.Length > 50)
+            return Result.Failure<Unit>("Last name must not exceed 50 characters");
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(lastName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+            return Result.Failure<Unit>("Last name can only contain letters");
+
+        return Result.Unit;
+    }
+
+    // private static Result<Unit> ValidateEmail(string email)
+    // {
+    //     if (string.IsNullOrWhiteSpace(email))
+    //         return Result.Failure<Unit>("Email is required");
+
+    //     if (!IsValidEmail(email))
+    //         return Result.Failure<Unit>("Invalid email format");
+
+    //     if (email.Length > 100)
+    //         return Result.Failure<Unit>("Email must not exceed 100 characters");
+
+    //     return Result.Unit;
+    // }
+
+    private static Result<Unit> ValidatePhone(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return Result.Failure<Unit>("Phone is required");
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[1-9]\d{1,14}$"))
+            return Result.Failure<Unit>("Invalid phone format (use international format)");
+
+        if (phone.Length > 15)
+            return Result.Failure<Unit>("Phone must not exceed 15 characters");
+
+        return Result.Unit;
+    }
+
+    private static Result<Unit> ValidatePasswordIfProvided(string password)
+    {
+        // Solo validar si se proporciona una contraseña
+        if (string.IsNullOrEmpty(password))
+            return Result.Unit;
+
+        if (password.Length < 8)
+            return Result.Failure<Unit>("Password must be at least 8 characters");
+
+        if (password.Length > 100)
+            return Result.Failure<Unit>("Password must not exceed 100 characters");
+
+        if (!password.Any(char.IsUpper))
+            return Result.Failure<Unit>("Password must contain at least one uppercase letter");
+
+        if (!password.Any(char.IsLower))
+            return Result.Failure<Unit>("Password must contain at least one lowercase letter");
+
+        if (!password.Any(char.IsDigit))
+            return Result.Failure<Unit>("Password must contain at least one number");
+
+        if (!password.Any(c => "@$!%*?&#".Contains(c)))
+            return Result.Failure<Unit>(
+                "Password must contain at least one special character (@$!%*?&#)"
+            );
+
+        return Result.Unit;
+    }
+
+    // Método auxiliar para validar email
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

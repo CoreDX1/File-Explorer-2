@@ -17,6 +17,7 @@ public readonly struct Result<T> : IResult<T>
 {
     private readonly T _value;
     private readonly Errors _error;
+    private readonly List<Errors> _Listerror;
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
@@ -34,6 +35,13 @@ public readonly struct Result<T> : IResult<T>
         _error = error;
         IsSuccess = false;
     }
+
+    // public Result(List<Errors> error)
+    // {
+    //     _value = default;
+    //     _Listerror.Add(error);
+    //     IsSuccess = false;
+    // }
 
     public T Value => IsSuccess ? _value : throw new InvalidOperationException("No value");
 

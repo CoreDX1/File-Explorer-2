@@ -1,5 +1,6 @@
 using Application.DTOs.Request;
 using Application.Interface;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers;
@@ -92,6 +93,20 @@ public class AuthController : ControllerBase
     {
         await _userServices.SendPasswordResetAsync(request.Email);
         return Ok(new { message = "Password reset email sent" });
+    }
+
+    [HttpPut("editUser")]
+    public async Task<IActionResult> Update([FromBody] EditUserRequest request)
+    {
+        var result = await _userServices.EditUser(request);
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> FindByIdAsync(int id)
+    {
+        var result = await _userServices.FindByIdAsync(id);
+        return Ok(result);
     }
 }
 

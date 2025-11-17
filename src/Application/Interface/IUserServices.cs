@@ -24,4 +24,5 @@ public interface IUserServices : IService<User>
     Task RevokeTokenAsync(string refreshToken);
     Task<ApiResult<object>> GoogleAuthAsync(string idToken);
     Task SendPasswordResetAsync(string email);
+    Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id);
 }
