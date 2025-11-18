@@ -6,17 +6,6 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Log.Logger = new LoggerConfiguration()
-//     .WriteTo.Console()
-//     .WriteTo.File(
-//         path: "logs/log-.txt",
-//         rollingInterval: RollingInterval.Day,
-//         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
-//     )
-//     .WriteTo.Seq("http://localhost:5341")
-//     .Enrich.FromLogContext()
-//     .CreateLogger();
-
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(
         outputTemplate: "[{RequestId}] {Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
@@ -33,6 +22,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -94,7 +84,32 @@ builder.Services.AddInfrastructureServices(configuration);
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 // Add Swagger/OpenAPI
-builder.Services.AddSwaggerGen(); // ← Importante: registra Swagger Gen
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using Bearer scheme",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] { }
+        }
+    });
+});
 
 var app = builder.Build();
 
