@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interface;
@@ -301,50 +302,121 @@ public class UserServices : Service<User>, IUserServices
         throw new NotImplementedException();
     }
 
-    public async Task<ApiResult<bool>> EditUser(EditUserRequest userRequest)
+    public async Task<ApiResult<bool>> EditUser(EditUserRequest request)
     {
         try
         {
-            string[] validation = GetErrors(
-                ValidateEmail(userRequest.Email),
-                ValidateId(userRequest.Id),
-                ValidatePassword(userRequest.Password),
-                ValidateFirstName(userRequest.FirstName)
-            );
+            _logger.LogInformation("Iniciando de edicion del usuario ID: {}", request.Id);
 
-            if (validation.Length > 0)
-                return ApiResult<bool>.Error(validation, 400);
+            var validationResult = new[]
+            {
+                ValidateEmail(request.Email),
+                ValidateId(request.Id),
+                ValidatePasswordIfProvided(request.Password),
+                ValidateFirstName(request.FirstName),
+                ValidateLastName(request.LastName),
+            };
 
-            Maybe<User> maybeUser = await FindAsync(userRequest.Id);
+            // Validando los datos
+            string[] errors = GetErrors(validationResult);
+
+            if (errors.Length > 0)
+            {
+                _logger.LogWarning(
+                    "Validación fallida al editar usuario {UserId}. Errores: {Errors}",
+                    request.Id,
+                    string.Join(", ", errors)
+                );
+                return ApiResult<bool>.Error(errors, 400);
+            }
+
+            Maybe<User> maybeUser = await FindAsync(request.Id);
 
             if (maybeUser.IsNone)
             {
+                _logger.LogWarning("Usuario no encontrado al editar: ID {UserId}", request.Id);
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
             User user = maybeUser.Value;
 
-            if (await FindByEmailAsync(userRequest.Email) == null)
+            // Verificando si el email esta duplicado
+            var maybeUserWithEmail = await FindByEmailAsync(request.Email);
+
+            if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != user.Id)
             {
-                return ApiResult<bool>.Error("Email duplicado", 404);
+                _logger.LogWarning(
+                    "Email {Email} ya está en uso por otro usuario (ID {ExistingId})",
+                    request.Email,
+                    maybeUserWithEmail.Value.Id
+                );
+                return ApiResult<bool>.Error("Email duplicado", 409);
             }
 
-            user.FirstName = userRequest.FirstName;
-            user.LastName = userRequest.LastName;
-            user.Phone = userRequest.Phone;
-            user.Email = userRequest.Email;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRequest.Password);
+            // Actualizando la entidad
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+            user.Phone = request.Phone;
+            user.Email = request.Email;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            // Solo cambiar la contraseña cuando se proporcione una nueva
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                _logger.LogInformation("Contraseña actualizada para usuario {UserId}", user.Id);
+            }
 
             Update(user);
 
             await _unitOfwork.SaveChangesAsync();
 
-            return ApiResult<bool>.Success(true, "User Edit", 200);
+            _logger.LogInformation("Usuario {UserId} actualizado correctamente", user.Id);
+
+            return ApiResult<bool>.Success(true, "Usuario actualizado correctamente", 200);
+        }
+        catch (DbUpdateException dbEx)
+        {
+            _logger.LogError(
+                dbEx,
+                "Error de base de datos al actualizar usuario {UserId}",
+                request.Id
+            );
+            return ApiResult<bool>.Error("Error al guardar los cambios en la base de datos", 500);
         }
         catch (Exception ex)
         {
-            return ApiResult<bool>.Error($"Error updating user: {ex.Message}", 500);
+            _logger.LogError(ex, "Error inesperado al editar usuario {UserId}", request.Id);
+            return ApiResult<bool>.Error("Error interno del servidor", 500);
         }
+    }
+
+    private static Result<Unit> ValidatePasswordIfProvided(string? password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            return Result.Unit; // No se valida si no se envía
+
+        if (password.Length < 8)
+            return Result.Failure<Unit>("La contraseña debe tener al menos 8 caracteres");
+
+        if (password.Length > 100)
+            return Result.Failure<Unit>("La contraseña no puede exceder los 100 caracteres");
+
+        if (!password.Any(char.IsUpper))
+            return Result.Failure<Unit>("La contraseña debe contener al menos una mayúscula");
+
+        if (!password.Any(char.IsLower))
+            return Result.Failure<Unit>("La contraseña debe contener al menos una minúscula");
+
+        if (!password.Any(char.IsDigit))
+            return Result.Failure<Unit>("La contraseña debe contener al menos un número");
+
+        if (!password.Any(c => "@$!%*?&#^_-".Contains(c)))
+            return Result.Failure<Unit>(
+                "La contraseña debe contener al menos un carácter especial (@$!%*?&#^_-)"
+            );
+
+        return Result.Unit;
     }
 
     // Métodos de validación que devuelven Result<Unit>
@@ -378,65 +450,22 @@ public class UserServices : Service<User>, IUserServices
         if (lastName.Length > 50)
             return Result.Failure<Unit>("Last name must not exceed 50 characters");
 
-        if (!System.Text.RegularExpressions.Regex.IsMatch(lastName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+        if (!Regex.IsMatch(lastName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
             return Result.Failure<Unit>("Last name can only contain letters");
 
         return Result.Unit;
     }
-
-    // private static Result<Unit> ValidateEmail(string email)
-    // {
-    //     if (string.IsNullOrWhiteSpace(email))
-    //         return Result.Failure<Unit>("Email is required");
-
-    //     if (!IsValidEmail(email))
-    //         return Result.Failure<Unit>("Invalid email format");
-
-    //     if (email.Length > 100)
-    //         return Result.Failure<Unit>("Email must not exceed 100 characters");
-
-    //     return Result.Unit;
-    // }
 
     private static Result<Unit> ValidatePhone(string phone)
     {
         if (string.IsNullOrWhiteSpace(phone))
             return Result.Failure<Unit>("Phone is required");
 
-        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[1-9]\d{1,14}$"))
+        if (!Regex.IsMatch(phone, @"^\+?[1-9]\d{1,14}$"))
             return Result.Failure<Unit>("Invalid phone format (use international format)");
 
         if (phone.Length > 15)
             return Result.Failure<Unit>("Phone must not exceed 15 characters");
-
-        return Result.Unit;
-    }
-
-    private static Result<Unit> ValidatePasswordIfProvided(string password)
-    {
-        // Solo validar si se proporciona una contraseña
-        if (string.IsNullOrEmpty(password))
-            return Result.Unit;
-
-        if (password.Length < 8)
-            return Result.Failure<Unit>("Password must be at least 8 characters");
-
-        if (password.Length > 100)
-            return Result.Failure<Unit>("Password must not exceed 100 characters");
-
-        if (!password.Any(char.IsUpper))
-            return Result.Failure<Unit>("Password must contain at least one uppercase letter");
-
-        if (!password.Any(char.IsLower))
-            return Result.Failure<Unit>("Password must contain at least one lowercase letter");
-
-        if (!password.Any(char.IsDigit))
-            return Result.Failure<Unit>("Password must contain at least one number");
-
-        if (!password.Any(c => "@$!%*?&#".Contains(c)))
-            return Result.Failure<Unit>(
-                "Password must contain at least one special character (@$!%*?&#)"
-            );
 
         return Result.Unit;
     }
