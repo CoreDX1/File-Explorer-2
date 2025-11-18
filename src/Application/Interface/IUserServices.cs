@@ -16,13 +16,15 @@ public interface IUserServices : IService<User>
     // public Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request);
     // public Task<ApiResult<LoginResponse>> Login(string email, string password);
 
-    // New methods for AuthController
-    Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password);
-    Task<ApiResult<bool>> EditUser(EditUserRequest user);
-    Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request);
-    Task<ApiResult<object>> RefreshTokenAsync(string refreshToken);
-    Task RevokeTokenAsync(string refreshToken);
-    Task<ApiResult<object>> GoogleAuthAsync(string idToken);
-    Task SendPasswordResetAsync(string email);
+    // Authentication methods
+    Task<ApiResult<LoginResponse>> AuthenticateUserAsync(string email, string password);
+    Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request);
+    Task<ApiResult<object>> RefreshAuthenticationAsync(string refreshToken);
+    Task RevokeAuthenticationAsync(string refreshToken);
+    Task<ApiResult<object>> AuthenticateWithGoogleAsync(string idToken);
+    
+    // User management methods
+    Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user);
+    Task InitiatePasswordResetAsync(string email);
     Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id);
 }

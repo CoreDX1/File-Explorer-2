@@ -19,6 +19,15 @@ public class User : Entity
     public DateTime UpdatedAt { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime LastLoginAt { get; set; }
+
+    public void UpdateProfile(string firstName, string lastName, string phone, string email)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Phone = phone;
+        Email = email;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
 
 public class LockoutOptions

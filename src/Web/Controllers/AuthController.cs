@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var result = await _userServices.AuthenticateAsync(request.Email, request.Password);
+        var result = await _userServices.AuthenticateUserAsync(request.Email, request.Password);
 
         if (result.Metadata is null)
         {
@@ -51,7 +51,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
     {
-        var result = await _userServices.CreateUserAsync(request);
+        var result = await _userServices.RegisterUserAsync(request);
 
         if (result.Metadata?.StatusCode != 201)
             return BadRequest(new { message = result.Metadata?.Message });
@@ -62,7 +62,7 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
-        var result = await _userServices.RefreshTokenAsync(request.RefreshToken);
+        var result = await _userServices.RefreshAuthenticationAsync(request.RefreshToken);
 
         if (result.Metadata?.StatusCode != 200)
             return Unauthorized(new { message = "Invalid refresh token" });
@@ -73,14 +73,14 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
     {
-        await _userServices.RevokeTokenAsync(request.RefreshToken);
+        await _userServices.RevokeAuthenticationAsync(request.RefreshToken);
         return NoContent();
     }
 
     [HttpPost("google")]
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
     {
-        var result = await _userServices.GoogleAuthAsync(request.IdToken);
+        var result = await _userServices.AuthenticateWithGoogleAsync(request.IdToken);
 
         if (result.Metadata?.StatusCode != 200)
             return BadRequest(new { message = result.Metadata?.Message });
@@ -91,14 +91,14 @@ public class AuthController : ControllerBase
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
-        await _userServices.SendPasswordResetAsync(request.Email);
+        await _userServices.InitiatePasswordResetAsync(request.Email);
         return Ok(new { message = "Password reset email sent" });
     }
 
     [HttpPut("editUser")]
     public async Task<IActionResult> Update([FromBody] EditUserRequest request)
     {
-        var result = await _userServices.EditUser(request);
+        var result = await _userServices.UpdateUserProfileAsync(request);
         return Ok(result);
     }
 

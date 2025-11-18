@@ -104,7 +104,7 @@ public class UserServices : Service<User>, IUserServices
         return Maybe.From(user);
     }
 
-    public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
+    public async Task<ApiResult<LoginResponse>> AuthenticateUserAsync(string email, string password)
     {
         _logger.LogInformation("Authentication attempt for {Email}", email);
 
@@ -203,7 +203,7 @@ public class UserServices : Service<User>, IUserServices
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
-    public async Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request)
+    public async Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request)
     {
         try
         {
@@ -282,27 +282,27 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
-    public Task<ApiResult<object>> RefreshTokenAsync(string refreshToken)
+    public Task<ApiResult<object>> RefreshAuthenticationAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task RevokeTokenAsync(string refreshToken)
+    public Task RevokeAuthenticationAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ApiResult<object>> GoogleAuthAsync(string idToken)
+    public Task<ApiResult<object>> AuthenticateWithGoogleAsync(string idToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task SendPasswordResetAsync(string email)
+    public Task InitiatePasswordResetAsync(string email)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<ApiResult<bool>> EditUser(EditUserRequest request)
+    public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest request)
     {
         try
         {
@@ -354,11 +354,7 @@ public class UserServices : Service<User>, IUserServices
             }
 
             // Actualizando la entidad
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
-            user.Phone = request.Phone;
-            user.Email = request.Email;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdateProfile(request.FirstName, request.LastName, request.Phone, request.Email);
 
             // Solo cambiar la contraseña cuando se proporcione una nueva
             if (!string.IsNullOrWhiteSpace(request.Password))
