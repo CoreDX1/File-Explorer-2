@@ -54,7 +54,7 @@ public class FolderServices : IFolderServices
         return _folderRepository.GetSubFolders(absolutePath);
     }
 
-    public Result<List<FileItem>> GetFiles(string path)
+    public Result<List<FileItem>> GetFolders(string path)
     {
         var userStoragePath = ResolveUserStoragePath();
         var absolutePath = Path.Combine(userStoragePath, path);
