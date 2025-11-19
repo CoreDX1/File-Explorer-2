@@ -187,6 +187,17 @@ public class UserServices : Service<User>, IUserServices
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
+    /// <summary>
+    /// Registers a new user in the system.
+    /// </summary>
+    /// <param name="request">The user registration data.</param>
+    /// <returns>ApiResult with LoginResponse containing user data and JWT token.</returns>
+    /// <remarks>
+    /// Validates request using FluentValidation.
+    /// Checks for duplicate email addresses.
+    /// Hashes password using BCrypt.
+    /// Automatically generates JWT token for immediate login.
+    /// </remarks>
     public async Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request)
     {
         try
@@ -285,11 +296,51 @@ public class UserServices : Service<User>, IUserServices
         throw new NotImplementedException();
     }
 
-    public Task InitiatePasswordResetAsync(string email)
+    /// <summary>
+    /// Generates a password reset token valid for 1 hour.
+    /// </summary>
+    public async Task InitiatePasswordResetAsync(string email)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Password reset requested for {Email}", email);
+
+        var emailResult = Email.Validate(email);
+        if (emailResult.IsFailure)
+        {
+            _logger.LogWarning("Invalid email format for password reset: {Email}", email);
+            return;
+        }
+
+        var maybeUser = await FindByEmailAsync(email);
+        
+        if (maybeUser.IsNone)
+        {
+            _logger.LogWarning("Password reset requested for non-existent email: {Email}", email);
+            // Don't reveal if user exists for security
+            return;
+        }
+
+        User user = maybeUser.Value;
+
+        // Generate reset token
+        user.PasswordResetToken = Guid.NewGuid().ToString("N");
+        user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+        Update(user);
+        await _unitOfwork.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Password reset token generated for user {UserId}. Token: {Token}",
+            user.Id,
+            user.PasswordResetToken
+        );
+
+        // TODO: Send email with reset link
+        // await _emailService.SendPasswordResetEmailAsync(user.Email, user.PasswordResetToken);
     }
 
+    /// <summary>
+    /// Updates user profile. Password only updated if provided.
+    /// </summary>
     public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest request)
     {
         try
@@ -367,6 +418,56 @@ public class UserServices : Service<User>, IUserServices
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error editing user {UserId}", request.Id);
+            return ApiResult<bool>.Error("Internal server error", 500);
+        }
+    }
+
+    /// <summary>
+    /// Resets password using token. Token expires after 1 hour.
+    /// </summary>
+    public async Task<ApiResult<bool>> ResetPasswordAsync(string token, string newPassword)
+    {
+        try
+        {
+            _logger.LogInformation("Password reset attempt with token: {Token}", token);
+
+            var passwordResult = Password.Create(newPassword);
+            if (passwordResult.IsFailure)
+            {
+                _logger.LogWarning("Invalid password format for reset");
+                return ApiResult<bool>.Error(passwordResult.GetErrorOrThrow().Message, 400);
+            }
+
+            var user = await Queryable()
+                .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+
+            if (user == null)
+            {
+                _logger.LogWarning("Invalid password reset token: {Token}", token);
+                return ApiResult<bool>.Error("Invalid or expired reset token", 400);
+            }
+
+            if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Expired password reset token for user {UserId}", user.Id);
+                return ApiResult<bool>.Error("Reset token has expired", 400);
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            Update(user);
+            await _unitOfwork.SaveChangesAsync();
+
+            _logger.LogInformation("Password reset successfully for user {UserId}", user.Id);
+
+            return ApiResult<bool>.Success(true, "Password reset successfully", 200);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting password");
             return ApiResult<bool>.Error("Internal server error", 500);
         }
     }
