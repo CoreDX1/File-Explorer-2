@@ -152,7 +152,7 @@ public class UserServices : Service<User>, IUserServices
                 Update(user);
                 await _unitOfwork.SaveChangesAsync();
 
-                // Mensaje incluye en qué intento estás y cuántos tienes en total
+                // Message includes current attempt and total allowed attempts
                 return ApiResult<LoginResponse>.Error(
                     $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}.",
                     401
@@ -294,11 +294,10 @@ public class UserServices : Service<User>, IUserServices
     {
         try
         {
-            _logger.LogInformation("Iniciando de edicion del usuario ID: {}", request.Id);
+            _logger.LogInformation("Starting user profile update for ID: {}", request.Id);
 
             var validationResult = new[]
             {
-                // ValidateEmail(request.Email),
                 Email.Validate(request.Email),
                 ValidateId(request.Id),
                 Password.ValidatePasswordIfProvided(request.Password),
@@ -306,13 +305,13 @@ public class UserServices : Service<User>, IUserServices
                 LastName.Validate(request.LastName),
             };
 
-            // Validando los datos
+            // Validate data
             string[] errors = GetErrors(validationResult);
 
             if (errors.Length > 0)
             {
                 _logger.LogWarning(
-                    "Validación fallida al editar usuario {UserId}. Errores: {Errors}",
+                    "Validation failed when editing user {UserId}. Errors: {Errors}",
                     request.Id,
                     string.Join(", ", errors)
                 );
@@ -323,60 +322,60 @@ public class UserServices : Service<User>, IUserServices
 
             if (maybeUser.IsNone)
             {
-                _logger.LogWarning("Usuario no encontrado al editar: ID {UserId}", request.Id);
+                _logger.LogWarning("User not found when editing: ID {UserId}", request.Id);
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
             User user = maybeUser.Value;
 
-            // Verificando si el email esta duplicado
+            // Check if email is already in use by another user
             var maybeUserWithEmail = await FindByEmailAsync(request.Email);
 
             if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != user.Id)
             {
                 _logger.LogWarning(
-                    "Email {Email} ya está en uso por otro usuario (ID {ExistingId})",
+                    "Email {Email} is already in use by another user (ID {ExistingId})",
                     request.Email,
                     maybeUserWithEmail.Value.Id
                 );
-                return ApiResult<bool>.Error("Email duplicado", 409);
+                return ApiResult<bool>.Error("Email already in use", 409);
             }
 
-            // Actualizando la entidad
+            // Update entity
             user.UpdateProfile(request.FirstName, request.LastName, request.Phone, request.Email);
 
-            // Solo cambiar la contraseña cuando se proporcione una nueva
+            // Only change password when a new one is provided
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-                _logger.LogInformation("Contraseña actualizada para usuario {UserId}", user.Id);
+                _logger.LogInformation("Password updated for user {UserId}", user.Id);
             }
 
             Update(user);
 
             await _unitOfwork.SaveChangesAsync();
 
-            _logger.LogInformation("Usuario {UserId} actualizado correctamente", user.Id);
+            _logger.LogInformation("User {UserId} updated successfully", user.Id);
 
-            return ApiResult<bool>.Success(true, "Usuario actualizado correctamente", 200);
+            return ApiResult<bool>.Success(true, "User updated successfully", 200);
         }
         catch (DbUpdateException dbEx)
         {
             _logger.LogError(
                 dbEx,
-                "Error de base de datos al actualizar usuario {UserId}",
+                "Database error updating user {UserId}",
                 request.Id
             );
-            return ApiResult<bool>.Error("Error al guardar los cambios en la base de datos", 500);
+            return ApiResult<bool>.Error("Error saving changes to database", 500);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al editar usuario {UserId}", request.Id);
-            return ApiResult<bool>.Error("Error interno del servidor", 500);
+            _logger.LogError(ex, "Unexpected error editing user {UserId}", request.Id);
+            return ApiResult<bool>.Error("Internal server error", 500);
         }
     }
 
-    // Métodos de validación que devuelven Result<Unit>
+    // Validation methods that return Result<Unit>
     private static Result<Unit> ValidateId(int id)
     {
         if (id <= 0)
