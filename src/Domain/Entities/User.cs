@@ -20,6 +20,9 @@ public class User : Entity
     public bool IsActive { get; set; } = true;
     public DateTime LastLoginAt { get; set; }
 
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
+
     public void UpdateProfile(string firstName, string lastName, string phone, string email)
     {
         FirstName = firstName;
