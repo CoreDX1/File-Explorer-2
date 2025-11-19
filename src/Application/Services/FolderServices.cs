@@ -31,7 +31,9 @@ public class FolderServices : IFolderServices
 
     private int GetAuthenticatedUserId()
     {
-        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(
+            ClaimTypes.NameIdentifier
+        );
         return int.Parse(
             userIdClaim?.Value ?? throw new UnauthorizedAccessException("User not authenticated")
         );
