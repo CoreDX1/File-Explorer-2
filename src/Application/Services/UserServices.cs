@@ -311,7 +311,7 @@ public class UserServices : Service<User>, IUserServices
         }
 
         var maybeUser = await FindByEmailAsync(email);
-        
+
         if (maybeUser.IsNone)
         {
             _logger.LogWarning("Password reset requested for non-existent email: {Email}", email);
@@ -438,8 +438,7 @@ public class UserServices : Service<User>, IUserServices
                 return ApiResult<bool>.Error(passwordResult.GetErrorOrThrow().Message, 400);
             }
 
-            var user = await Queryable()
-                .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+            var user = await Queryable().FirstOrDefaultAsync(u => u.PasswordResetToken == token);
 
             if (user == null)
             {
@@ -447,7 +446,10 @@ public class UserServices : Service<User>, IUserServices
                 return ApiResult<bool>.Error("Invalid or expired reset token", 400);
             }
 
-            if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            if (
+                user.PasswordResetTokenExpiry == null
+                || user.PasswordResetTokenExpiry < DateTime.UtcNow
+            )
             {
                 _logger.LogWarning("Expired password reset token for user {UserId}", user.Id);
                 return ApiResult<bool>.Error("Reset token has expired", 400);
