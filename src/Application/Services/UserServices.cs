@@ -320,11 +320,11 @@ public class UserServices : Service<User>, IUserServices
             var validationResult = new[]
             {
                 // ValidateEmail(request.Email),
-                Email.ValidateEmail(request.Email),
+                Email.Validate(request.Email),
                 ValidateId(request.Id),
-                ValidatePasswordIfProvided(request.Password),
-                ValidateFirstName(request.FirstName),
-                ValidateLastName(request.LastName),
+                Password.ValidatePasswordIfProvided(request.Password),
+                FirstName.Validate(request.FirstName),
+                LastName.Validate(request.LastName),
             };
 
             // Validando los datos
@@ -395,34 +395,6 @@ public class UserServices : Service<User>, IUserServices
             _logger.LogError(ex, "Error inesperado al editar usuario {UserId}", request.Id);
             return ApiResult<bool>.Error("Error interno del servidor", 500);
         }
-    }
-
-    private static Result<Unit> ValidatePasswordIfProvided(string? password)
-    {
-        if (string.IsNullOrWhiteSpace(password))
-            return Result.Unit; // No se valida si no se envía
-
-        if (password.Length < 8)
-            return Result.Failure<Unit>("La contraseña debe tener al menos 8 caracteres");
-
-        if (password.Length > 100)
-            return Result.Failure<Unit>("La contraseña no puede exceder los 100 caracteres");
-
-        if (!password.Any(char.IsUpper))
-            return Result.Failure<Unit>("La contraseña debe contener al menos una mayúscula");
-
-        if (!password.Any(char.IsLower))
-            return Result.Failure<Unit>("La contraseña debe contener al menos una minúscula");
-
-        if (!password.Any(char.IsDigit))
-            return Result.Failure<Unit>("La contraseña debe contener al menos un número");
-
-        if (!password.Any(c => "@$!%*?&#^_-".Contains(c)))
-            return Result.Failure<Unit>(
-                "La contraseña debe contener al menos un carácter especial (@$!%*?&#^_-)"
-            );
-
-        return Result.Unit;
     }
 
     // Métodos de validación que devuelven Result<Unit>
