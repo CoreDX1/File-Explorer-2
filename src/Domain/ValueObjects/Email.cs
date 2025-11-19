@@ -17,7 +17,7 @@ public sealed record Email
         return Result.Success(new Email(value));
     }
 
-    public static Result<Unit> ValidateEmail(string email)
+    public static Result<Unit> Validate(string email)
     {
         if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
             return Result.Failure<Unit>("Invalid email adress");
