@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interface;
@@ -80,22 +79,6 @@ public class UserServices : Service<User>, IUserServices
             _logger.LogError(ex, "Error retrieving users");
             return ApiResult<List<GetUserResponse>>.Error("Error retrieving users", 500);
         }
-    }
-
-    // private Result<Unit> ValidateEmail(string email)
-    // {
-    //     if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
-    //         return Result.Failure<Unit>("Invalid email adress");
-
-    //     return Result.Unit;
-    // }
-
-    private Result<Unit> ValidatePassword(string pass)
-    {
-        if (pass.Length < 8)
-            return Result.Failure<Unit>("Password must be at least 8 characters");
-
-        return Result.Unit;
     }
 
     public async Task<Maybe<User>> FindByEmailAsync(string email)
@@ -404,61 +387,5 @@ public class UserServices : Service<User>, IUserServices
             return Result.Failure<Unit>("User ID must be greater than zero");
 
         return Result.Unit;
-    }
-
-    private static Result<Unit> ValidateFirstName(string firstName)
-    {
-        if (string.IsNullOrWhiteSpace(firstName))
-            return Result.Failure<Unit>("First name is required");
-
-        if (firstName.Length > 50)
-            return Result.Failure<Unit>("First name must not exceed 50 characters");
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(firstName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
-            return Result.Failure<Unit>("First name can only contain letters");
-
-        return Result.Unit;
-    }
-
-    private static Result<Unit> ValidateLastName(string lastName)
-    {
-        if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure<Unit>("Last name is required");
-
-        if (lastName.Length > 50)
-            return Result.Failure<Unit>("Last name must not exceed 50 characters");
-
-        if (!Regex.IsMatch(lastName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
-            return Result.Failure<Unit>("Last name can only contain letters");
-
-        return Result.Unit;
-    }
-
-    private static Result<Unit> ValidatePhone(string phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone))
-            return Result.Failure<Unit>("Phone is required");
-
-        if (!Regex.IsMatch(phone, @"^\+?[1-9]\d{1,14}$"))
-            return Result.Failure<Unit>("Invalid phone format (use international format)");
-
-        if (phone.Length > 15)
-            return Result.Failure<Unit>("Phone must not exceed 15 characters");
-
-        return Result.Unit;
-    }
-
-    // Método auxiliar para validar email
-    private static bool IsValidEmail(string email)
-    {
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
-        }
-        catch
-        {
-            return false;
-        }
     }
 }
