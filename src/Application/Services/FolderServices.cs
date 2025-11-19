@@ -66,7 +66,7 @@ public class FolderServices : IFolderServices
         var userStoragePath = ResolveUserStoragePath();
         var absoluteFilePath = Path.Combine(userStoragePath, filePath);
         var fileContent = _folderRepository.ReadFile(absoluteFilePath);
-        return Result.Success(fileContent, "El archivo fue leido correctamente.");
+        return Result.Success(fileContent, "File read successfully.");
     }
 
     public Result<string> CreateFolder(string path)
@@ -76,9 +76,9 @@ public class FolderServices : IFolderServices
         var wasCreated = _folderRepository.CreateFolder(absoluteFolderPath);
 
         if (!wasCreated)
-            return Result.NotFound("El directorio no pudo ser creado.");
+            return Result.NotFound("Directory could not be created.");
 
-        return Result.Success("El directorio fue creado correctamente.");
+        return Result.Success("Directory created successfully.");
     }
 
     public Result<string> RenameFolder(string oldPath, string newPath)
@@ -89,9 +89,9 @@ public class FolderServices : IFolderServices
         var wasRenamed = _folderRepository.RenameFolder(absoluteOldPath, absoluteNewPath);
 
         if (!wasRenamed)
-            return Result.NotFound("El directorio no pudo ser renombrado.");
+            return Result.NotFound("Directory could not be renamed.");
 
-        return Result.Success("El directorio fue renombrado correctamente.");
+        return Result.Success("Directory renamed successfully.");
     }
 
     public Result<string> DeleteFolder(string path)
@@ -101,9 +101,9 @@ public class FolderServices : IFolderServices
         var wasDeleted = _folderRepository.DeleteFolder(absoluteFolderPath);
 
         if (!wasDeleted)
-            return Result.NotFound("El directorio no pudo ser borrado.");
+            return Result.NotFound("Directory could not be deleted.");
 
-        return Result.Success("El directorio fue borrado correctamente.");
+        return Result.Success("Directory deleted successfully.");
     }
 
     public Task<FolderItem?> GetFolderByIdAsync(Guid id)
@@ -124,7 +124,7 @@ public class FolderServices : IFolderServices
         var wasCreated = _folderRepository.CreateFolder(folderPath);
 
         if (!wasCreated)
-            throw new InvalidOperationException("El directorio no pudo ser creado");
+            throw new InvalidOperationException("Directory could not be created");
 
         var folderItem = new FolderItem(
             Guid.NewGuid(),
