@@ -99,10 +99,6 @@ public class UserServices : Service<User>, IUserServices
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
 
-        // var demo = ValidateEmail(email)
-        //     .Bind(() => ValidatePassword(password))
-        //     .Map(_ => new CreateUserRequest(email, password));
-
         User user = maybeUser.GetValueOrThrow();
 
         // Check if user is currently locked out
