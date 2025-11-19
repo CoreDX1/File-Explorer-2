@@ -1,4 +1,5 @@
 using Application.DTOs.Request;
+using Application.DTOs.Response;
 using Application.Interface;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,7 @@ public class AuthController : ControllerBase
             );
 
             return StatusCode(
-                result.Metadata.StatusCode,
+                result.Metadata.StatusCode ?? 500,
                 new { message = result.Metadata.Message }
             );
         }
