@@ -361,11 +361,7 @@ public class UserServices : Service<User>, IUserServices
         }
         catch (DbUpdateException dbEx)
         {
-            _logger.LogError(
-                dbEx,
-                "Database error updating user {UserId}",
-                request.Id
-            );
+            _logger.LogError(dbEx, "Database error updating user {UserId}", request.Id);
             return ApiResult<bool>.Error("Error saving changes to database", 500);
         }
         catch (Exception ex)
