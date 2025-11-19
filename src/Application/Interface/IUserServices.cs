@@ -6,7 +6,7 @@ using Domain.Monads;
 namespace Application.Interface;
 
 /// <summary>
-/// Agregar cualquier metodo de logica de negocio aqui
+/// Add any business logic methods here
 /// </summary>
 public interface IUserServices : IService<User>
 {
@@ -26,5 +26,6 @@ public interface IUserServices : IService<User>
     // User management methods
     Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user);
     Task InitiatePasswordResetAsync(string email);
+    Task<ApiResult<bool>> ResetPasswordAsync(string token, string newPassword);
     Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id);
 }
