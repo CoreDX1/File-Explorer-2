@@ -42,14 +42,13 @@ public class UserServices : Service<User>, IUserServices
     {
         User? user = await FindAsync(id);
 
-        GetUserResponseUnique userDto = new()
-        {
-            Email = user.Email,
-            FirstName = user.FirstName,
-            Id = user.Id,
-            LastName = user.LastName,
-            Phone = user.Phone,
-        };
+        var userDto = new GetUserResponseUnique(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Phone
+        );
 
         if (user == null)
             return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
@@ -191,8 +190,13 @@ public class UserServices : Service<User>, IUserServices
         Update(user);
         await _unitOfwork.SaveChangesAsync();
 
-        LoginResponse userMapper = user.Adapt<LoginResponse>();
-        userMapper.Token = token;
+        LoginResponse userMapper = new(
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.Phone,
+            token
+        );
 
         _logger.LogInformation(
             "User authenticated successfully: {Email}, UserId: {UserId}",
@@ -258,9 +262,13 @@ public class UserServices : Service<User>, IUserServices
                 "User"
             );
 
-            LoginResponse response = userToCreate.Adapt<LoginResponse>();
-
-            response.Token = token;
+            LoginResponse response = new(
+                userToCreate.Email,
+                userToCreate.FirstName,
+                userToCreate.LastName,
+                userToCreate.Phone,
+                token
+            );
 
             _logger.LogInformation(
                 "User created successfully: {Email}, UserId: {UserId}",
