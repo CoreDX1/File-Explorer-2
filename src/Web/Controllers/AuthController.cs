@@ -96,6 +96,17 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Password reset email sent" });
     }
 
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var result = await _userServices.ResetPasswordAsync(request.Token, request.NewPassword);
+        
+        if (result.Metadata?.StatusCode != 200)
+            return BadRequest(result);
+        
+        return Ok(result);
+    }
+
     [HttpPut("editUser")]
     public async Task<IActionResult> Update([FromBody] EditUserRequest request)
     {
@@ -118,3 +129,5 @@ public record LogoutRequest(string RefreshToken);
 public record GoogleAuthRequest(string IdToken);
 
 public record ForgotPasswordRequest(string Email);
+
+public record ResetPasswordRequest(string Token, string NewPassword);
