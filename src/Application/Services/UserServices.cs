@@ -4,6 +4,7 @@ using Application.Interface;
 using Domain.Entities;
 using Domain.Monads;
 using Domain.Monads.Result;
+using Domain.ValueObjects;
 using FluentValidation;
 using FluentValidation.Results;
 using Infrastructure.Interface;
@@ -41,14 +42,13 @@ public class UserServices : Service<User>, IUserServices
     {
         User? user = await FindAsync(id);
 
-        GetUserResponseUnique userDto = new()
-        {
-            Email = user.Email,
-            FirstName = user.FirstName,
-            Id = user.Id,
-            LastName = user.LastName,
-            Phone = user.Phone,
-        };
+        var userDto = new GetUserResponseUnique(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Phone
+        );
 
         if (user == null)
             return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
@@ -81,29 +81,13 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
-    private Result<Unit> ValidateEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
-            return Result.Failure<Unit>("Invalid email adress");
-
-        return Result.Unit;
-    }
-
-    private Result<Unit> ValidatePassword(string pass)
-    {
-        if (pass.Length < 8)
-            return Result.Failure<Unit>("Password must be at least 8 characters");
-
-        return Result.Unit;
-    }
-
     public async Task<Maybe<User>> FindByEmailAsync(string email)
     {
         User? user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
         return Maybe.From(user);
     }
 
-    public async Task<ApiResult<LoginResponse>> AuthenticateAsync(string email, string password)
+    public async Task<ApiResult<LoginResponse>> AuthenticateUserAsync(string email, string password)
     {
         _logger.LogInformation("Authentication attempt for {Email}", email);
 
@@ -114,10 +98,6 @@ public class UserServices : Service<User>, IUserServices
             _logger.LogWarning("Authentication failed: Invalid credentials for {Email}", email);
             return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
         }
-
-        // var demo = ValidateEmail(email)
-        //     .Bind(() => ValidatePassword(password))
-        //     .Map(_ => new CreateUserRequest(email, password));
 
         User user = maybeUser.GetValueOrThrow();
 
@@ -172,7 +152,7 @@ public class UserServices : Service<User>, IUserServices
                 Update(user);
                 await _unitOfwork.SaveChangesAsync();
 
-                // Mensaje incluye en qué intento estás y cuántos tienes en total
+                // Message includes current attempt and total allowed attempts
                 return ApiResult<LoginResponse>.Error(
                     $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}.",
                     401
@@ -190,8 +170,13 @@ public class UserServices : Service<User>, IUserServices
         Update(user);
         await _unitOfwork.SaveChangesAsync();
 
-        LoginResponse userMapper = user.Adapt<LoginResponse>();
-        userMapper.Token = token;
+        LoginResponse userMapper = new(
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.Phone,
+            token
+        );
 
         _logger.LogInformation(
             "User authenticated successfully: {Email}, UserId: {UserId}",
@@ -202,7 +187,18 @@ public class UserServices : Service<User>, IUserServices
         return ApiResult<LoginResponse>.Success(userMapper, "Login successful", 200);
     }
 
-    public async Task<ApiResult<LoginResponse>> CreateUserAsync(CreateUserRequest request)
+    /// <summary>
+    /// Registers a new user in the system.
+    /// </summary>
+    /// <param name="request">The user registration data.</param>
+    /// <returns>ApiResult with LoginResponse containing user data and JWT token.</returns>
+    /// <remarks>
+    /// Validates request using FluentValidation.
+    /// Checks for duplicate email addresses.
+    /// Hashes password using BCrypt.
+    /// Automatically generates JWT token for immediate login.
+    /// </remarks>
+    public async Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request)
     {
         try
         {
@@ -257,9 +253,13 @@ public class UserServices : Service<User>, IUserServices
                 "User"
             );
 
-            LoginResponse response = userToCreate.Adapt<LoginResponse>();
-
-            response.Token = token;
+            LoginResponse response = new(
+                userToCreate.Email,
+                userToCreate.FirstName,
+                userToCreate.LastName,
+                userToCreate.Phone,
+                token
+            );
 
             _logger.LogInformation(
                 "User created successfully: {Email}, UserId: {UserId}",
@@ -281,177 +281,203 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
-    public Task<ApiResult<object>> RefreshTokenAsync(string refreshToken)
+    public Task<ApiResult<object>> RefreshAuthenticationAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task RevokeTokenAsync(string refreshToken)
+    public Task RevokeAuthenticationAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ApiResult<object>> GoogleAuthAsync(string idToken)
+    public Task<ApiResult<object>> AuthenticateWithGoogleAsync(string idToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task SendPasswordResetAsync(string email)
+    /// <summary>
+    /// Generates a password reset token valid for 1 hour.
+    /// </summary>
+    public async Task InitiatePasswordResetAsync(string email)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Password reset requested for {Email}", email);
+
+        var emailResult = Email.Validate(email);
+        if (emailResult.IsFailure)
+        {
+            _logger.LogWarning("Invalid email format for password reset: {Email}", email);
+            return;
+        }
+
+        var maybeUser = await FindByEmailAsync(email);
+        
+        if (maybeUser.IsNone)
+        {
+            _logger.LogWarning("Password reset requested for non-existent email: {Email}", email);
+            // Don't reveal if user exists for security
+            return;
+        }
+
+        User user = maybeUser.Value;
+
+        // Generate reset token
+        user.PasswordResetToken = Guid.NewGuid().ToString("N");
+        user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+        Update(user);
+        await _unitOfwork.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Password reset token generated for user {UserId}. Token: {Token}",
+            user.Id,
+            user.PasswordResetToken
+        );
+
+        // TODO: Send email with reset link
+        // await _emailService.SendPasswordResetEmailAsync(user.Email, user.PasswordResetToken);
     }
 
-    public async Task<ApiResult<bool>> EditUser(EditUserRequest userRequest)
+    /// <summary>
+    /// Updates user profile. Password only updated if provided.
+    /// </summary>
+    public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest request)
     {
         try
         {
-            string[] validation = GetErrors(
-                ValidateEmail(userRequest.Email),
-                ValidateId(userRequest.Id),
-                ValidatePassword(userRequest.Password),
-                ValidateFirstName(userRequest.FirstName)
-            );
+            _logger.LogInformation("Starting user profile update for ID: {}", request.Id);
 
-            if (validation.Length > 0)
-                return ApiResult<bool>.Error(validation, 400);
+            var validationResult = new[]
+            {
+                Email.Validate(request.Email),
+                ValidateId(request.Id),
+                Password.ValidatePasswordIfProvided(request.Password),
+                FirstName.Validate(request.FirstName),
+                LastName.Validate(request.LastName),
+            };
 
-            Maybe<User> maybeUser = await FindAsync(userRequest.Id);
+            // Validate data
+            string[] errors = GetErrors(validationResult);
+
+            if (errors.Length > 0)
+            {
+                _logger.LogWarning(
+                    "Validation failed when editing user {UserId}. Errors: {Errors}",
+                    request.Id,
+                    string.Join(", ", errors)
+                );
+                return ApiResult<bool>.Error(errors, 400);
+            }
+
+            Maybe<User> maybeUser = await FindAsync(request.Id);
 
             if (maybeUser.IsNone)
             {
+                _logger.LogWarning("User not found when editing: ID {UserId}", request.Id);
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
             User user = maybeUser.Value;
 
-            if (await FindByEmailAsync(userRequest.Email) == null)
+            // Check if email is already in use by another user
+            var maybeUserWithEmail = await FindByEmailAsync(request.Email);
+
+            if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != user.Id)
             {
-                return ApiResult<bool>.Error("Email duplicado", 404);
+                _logger.LogWarning(
+                    "Email {Email} is already in use by another user (ID {ExistingId})",
+                    request.Email,
+                    maybeUserWithEmail.Value.Id
+                );
+                return ApiResult<bool>.Error("Email already in use", 409);
             }
 
-            user.FirstName = userRequest.FirstName;
-            user.LastName = userRequest.LastName;
-            user.Phone = userRequest.Phone;
-            user.Email = userRequest.Email;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRequest.Password);
+            // Update entity
+            user.UpdateProfile(request.FirstName, request.LastName, request.Phone, request.Email);
+
+            // Only change password when a new one is provided
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                _logger.LogInformation("Password updated for user {UserId}", user.Id);
+            }
 
             Update(user);
 
             await _unitOfwork.SaveChangesAsync();
 
-            return ApiResult<bool>.Success(true, "User Edit", 200);
+            _logger.LogInformation("User {UserId} updated successfully", user.Id);
+
+            return ApiResult<bool>.Success(true, "User updated successfully", 200);
+        }
+        catch (DbUpdateException dbEx)
+        {
+            _logger.LogError(dbEx, "Database error updating user {UserId}", request.Id);
+            return ApiResult<bool>.Error("Error saving changes to database", 500);
         }
         catch (Exception ex)
         {
-            return ApiResult<bool>.Error($"Error updating user: {ex.Message}", 500);
+            _logger.LogError(ex, "Unexpected error editing user {UserId}", request.Id);
+            return ApiResult<bool>.Error("Internal server error", 500);
         }
     }
 
-    // Métodos de validación que devuelven Result<Unit>
+    /// <summary>
+    /// Resets password using token. Token expires after 1 hour.
+    /// </summary>
+    public async Task<ApiResult<bool>> ResetPasswordAsync(string token, string newPassword)
+    {
+        try
+        {
+            _logger.LogInformation("Password reset attempt with token: {Token}", token);
+
+            var passwordResult = Password.Create(newPassword);
+            if (passwordResult.IsFailure)
+            {
+                _logger.LogWarning("Invalid password format for reset");
+                return ApiResult<bool>.Error(passwordResult.GetErrorOrThrow().Message, 400);
+            }
+
+            var user = await Queryable()
+                .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+
+            if (user == null)
+            {
+                _logger.LogWarning("Invalid password reset token: {Token}", token);
+                return ApiResult<bool>.Error("Invalid or expired reset token", 400);
+            }
+
+            if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Expired password reset token for user {UserId}", user.Id);
+                return ApiResult<bool>.Error("Reset token has expired", 400);
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            Update(user);
+            await _unitOfwork.SaveChangesAsync();
+
+            _logger.LogInformation("Password reset successfully for user {UserId}", user.Id);
+
+            return ApiResult<bool>.Success(true, "Password reset successfully", 200);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting password");
+            return ApiResult<bool>.Error("Internal server error", 500);
+        }
+    }
+
+    // Validation methods that return Result<Unit>
     private static Result<Unit> ValidateId(int id)
     {
         if (id <= 0)
             return Result.Failure<Unit>("User ID must be greater than zero");
 
         return Result.Unit;
-    }
-
-    private static Result<Unit> ValidateFirstName(string firstName)
-    {
-        if (string.IsNullOrWhiteSpace(firstName))
-            return Result.Failure<Unit>("First name is required");
-
-        if (firstName.Length > 50)
-            return Result.Failure<Unit>("First name must not exceed 50 characters");
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(firstName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
-            return Result.Failure<Unit>("First name can only contain letters");
-
-        return Result.Unit;
-    }
-
-    private static Result<Unit> ValidateLastName(string lastName)
-    {
-        if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure<Unit>("Last name is required");
-
-        if (lastName.Length > 50)
-            return Result.Failure<Unit>("Last name must not exceed 50 characters");
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(lastName, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
-            return Result.Failure<Unit>("Last name can only contain letters");
-
-        return Result.Unit;
-    }
-
-    // private static Result<Unit> ValidateEmail(string email)
-    // {
-    //     if (string.IsNullOrWhiteSpace(email))
-    //         return Result.Failure<Unit>("Email is required");
-
-    //     if (!IsValidEmail(email))
-    //         return Result.Failure<Unit>("Invalid email format");
-
-    //     if (email.Length > 100)
-    //         return Result.Failure<Unit>("Email must not exceed 100 characters");
-
-    //     return Result.Unit;
-    // }
-
-    private static Result<Unit> ValidatePhone(string phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone))
-            return Result.Failure<Unit>("Phone is required");
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[1-9]\d{1,14}$"))
-            return Result.Failure<Unit>("Invalid phone format (use international format)");
-
-        if (phone.Length > 15)
-            return Result.Failure<Unit>("Phone must not exceed 15 characters");
-
-        return Result.Unit;
-    }
-
-    private static Result<Unit> ValidatePasswordIfProvided(string password)
-    {
-        // Solo validar si se proporciona una contraseña
-        if (string.IsNullOrEmpty(password))
-            return Result.Unit;
-
-        if (password.Length < 8)
-            return Result.Failure<Unit>("Password must be at least 8 characters");
-
-        if (password.Length > 100)
-            return Result.Failure<Unit>("Password must not exceed 100 characters");
-
-        if (!password.Any(char.IsUpper))
-            return Result.Failure<Unit>("Password must contain at least one uppercase letter");
-
-        if (!password.Any(char.IsLower))
-            return Result.Failure<Unit>("Password must contain at least one lowercase letter");
-
-        if (!password.Any(char.IsDigit))
-            return Result.Failure<Unit>("Password must contain at least one number");
-
-        if (!password.Any(c => "@$!%*?&#".Contains(c)))
-            return Result.Failure<Unit>(
-                "Password must contain at least one special character (@$!%*?&#)"
-            );
-
-        return Result.Unit;
-    }
-
-    // Método auxiliar para validar email
-    private static bool IsValidEmail(string email)
-    {
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
-        }
-        catch
-        {
-            return false;
-        }
     }
 }

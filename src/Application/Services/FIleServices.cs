@@ -14,6 +14,11 @@ public class FileServices : IFileServices
         _fileRepository = fileRepository;
     }
 
+    public Task<bool> CreateFileAsync(CreateFileRequest createFile)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task<ShareLinkResult> CreateShareLinkAsync(Guid id, ShareFileRequest request)
     {
         throw new NotImplementedException();

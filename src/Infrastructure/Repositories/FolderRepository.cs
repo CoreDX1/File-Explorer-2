@@ -13,7 +13,7 @@ public class FolderRepository : IFolderRepository
         string fullPath = Path.Combine(FullPath, path);
 
         if (!Directory.Exists(fullPath))
-            throw new ArgumentException("El directorio no existe.");
+            throw new ArgumentException("Directory does not exist.");
 
         var subFolders = new List<DirectoryItem>();
 
@@ -38,7 +38,7 @@ public class FolderRepository : IFolderRepository
         string fullPath = Path.Combine(FullPath, path);
 
         if (!Directory.Exists(fullPath))
-            throw new ArgumentException("El directorio no existe.");
+            throw new ArgumentException("Directory does not exist.");
 
         var files = new List<FileItem>();
 
@@ -64,7 +64,7 @@ public class FolderRepository : IFolderRepository
         string fullPath = Path.Combine(FullPath, filePath);
 
         if (!File.Exists(fullPath))
-            throw new ArgumentException("El archivo no existe.");
+            throw new ArgumentException("File does not exist.");
 
         return File.ReadAllText(fullPath);
     }

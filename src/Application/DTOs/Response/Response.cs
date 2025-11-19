@@ -11,43 +11,27 @@ public class ApiResult<T>
         return new ApiResult<T>
         {
             Data = data,
-            Metadata = new ResponseMetadata { Message = message, StatusCode = code },
+            Metadata = new ResponseMetadata(code, message, null),
         };
     }
 
     public static ApiResult<T> Success(string message, int code)
     {
-        return new ApiResult<T>
-        {
-            Metadata = new ResponseMetadata { Message = message, StatusCode = code },
-        };
+        return new ApiResult<T> { Metadata = new ResponseMetadata(code, message, null) };
     }
 
     public static ApiResult<T> Error(string message, int code)
     {
-        return new ApiResult<T>
-        {
-            Metadata = new ResponseMetadata { Message = message, StatusCode = code },
-        };
+        return new ApiResult<T> { Metadata = new ResponseMetadata(code, message, null) };
     }
 
     public static ApiResult<T> Error(string[] errors, int code)
     {
         return new ApiResult<T>
         {
-            Metadata = new ResponseMetadata
-            {
-                Message = string.Join(", ", errors),
-                StatusCode = code,
-                Errors = errors,
-            },
+            Metadata = new ResponseMetadata(code, string.Join(", ", errors), errors),
         };
     }
 }
 
-public class ResponseMetadata
-{
-    public int StatusCode { get; set; }
-    public string? Message { get; set; }
-    public string[] Errors { get; set; } = [];
-}
+public sealed record ResponseMetadata(int? StatusCode, string? Message, string[]? Errors);

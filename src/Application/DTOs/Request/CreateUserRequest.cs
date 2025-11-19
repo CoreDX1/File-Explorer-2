@@ -1,12 +1,9 @@
 namespace Application.DTOs.Request;
 
-public class CreateUserRequest
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-
-    public CreateUserRequest(string email, string pass) { }
-}
+public sealed record CreateUserRequest(
+    string FirstName,
+    string LastName,
+    string Phone,
+    string Password,
+    string Email
+);
