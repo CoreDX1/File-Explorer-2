@@ -5,6 +5,7 @@ using Application.Interface;
 using Domain.Entities;
 using Domain.Monads;
 using Domain.Monads.Result;
+using Domain.ValueObjects;
 using FluentValidation;
 using FluentValidation.Results;
 using Infrastructure.Interface;
@@ -81,13 +82,13 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
-    private Result<Unit> ValidateEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
-            return Result.Failure<Unit>("Invalid email adress");
+    // private Result<Unit> ValidateEmail(string email)
+    // {
+    //     if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+    //         return Result.Failure<Unit>("Invalid email adress");
 
-        return Result.Unit;
-    }
+    //     return Result.Unit;
+    // }
 
     private Result<Unit> ValidatePassword(string pass)
     {
@@ -318,7 +319,8 @@ public class UserServices : Service<User>, IUserServices
 
             var validationResult = new[]
             {
-                ValidateEmail(request.Email),
+                // ValidateEmail(request.Email),
+                Email.ValidateEmail(request.Email),
                 ValidateId(request.Id),
                 ValidatePasswordIfProvided(request.Password),
                 ValidateFirstName(request.FirstName),
