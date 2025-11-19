@@ -1,15 +1,16 @@
 namespace Application.DTOs.Response;
 
-public class GetUserResponse
+public sealed record GetUserResponse(
+    int Id,
+    string FirstName,
+    string LastName,
+    string Email,
+    string Phone,
+    bool IsActive,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    DateTime LastLoginAt
+)
 {
-    public int Id { get; set; }
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string FullName => $"{FirstName} {LastName}".Trim();
-    public string Email { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-    public DateTime LastLoginAt { get; set; }
-}
+    public string FullName => $"{FirstName} {LastName}";
+};
