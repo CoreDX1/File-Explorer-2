@@ -11,7 +11,7 @@ public sealed record Email
 
     public static Result<Email> Create(string value)
     {
-        if (string.IsNullOrWhiteSpace(value) || !value.Contains("@"))
+        if (string.IsNullOrWhiteSpace(value) || !value.Contains('@', StringComparison.Ordinal))
             return Result.Failure<Email>("Invalid email adress");
 
         return Result.Success(new Email(value));
@@ -19,11 +19,11 @@ public sealed record Email
 
     public static Result<Unit> Validate(string email)
     {
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@', StringComparison.Ordinal))
             return Result.Failure<Unit>("Invalid email adress");
 
         return Result.Unit;
     }
 
-    public static implicit operator string(Email email) => email.Value;
+    public static implicit operator string(Email email) => email?.Value ?? throw new ArgumentNullException(nameof(email));
 }
