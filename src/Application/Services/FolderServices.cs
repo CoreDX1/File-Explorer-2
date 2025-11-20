@@ -3,7 +3,7 @@ namespace Application.Services;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Application.Interface;
+using Application.Interfaces;
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -22,6 +22,7 @@ public class FolderServices : IFolderServices
         IConfiguration configuration
     )
     {
+        ArgumentNullException.ThrowIfNull(configuration);
         _folderRepository = folderRepository;
         _httpContextAccessor = httpContextAccessor;
         _containerPath =
@@ -35,7 +36,8 @@ public class FolderServices : IFolderServices
             ClaimTypes.NameIdentifier
         );
         return int.Parse(
-            userIdClaim?.Value ?? throw new UnauthorizedAccessException("User not authenticated")
+            userIdClaim?.Value ?? throw new UnauthorizedAccessException("User not authenticated"),
+            System.Globalization.CultureInfo.InvariantCulture
         );
     }
 
@@ -51,14 +53,16 @@ public class FolderServices : IFolderServices
     {
         var userStoragePath = ResolveUserStoragePath();
         var absolutePath = Path.Combine(userStoragePath, path);
-        return _folderRepository.GetSubFolders(absolutePath);
+        var folders = _folderRepository.GetSubFolders(absolutePath);
+        return Result.Success(folders.ToList());
     }
 
     public Result<List<FileItem>> GetFiles(string path)
     {
         var userStoragePath = ResolveUserStoragePath();
         var absolutePath = Path.Combine(userStoragePath, path);
-        return _folderRepository.GetFiles(absolutePath);
+        var files = _folderRepository.GetFiles(absolutePath);
+        return Result.Success(files.ToList());
     }
 
     public Result<string> ReadFile(string filePath)
@@ -118,6 +122,7 @@ public class FolderServices : IFolderServices
 
     public Task<FolderItem> CreateFolderAsync(CreateFolderRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var userStoragePath = ResolveUserStoragePath();
         var folderPath = Path.Combine(userStoragePath, request.Name);
 
