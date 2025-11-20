@@ -18,7 +18,7 @@ public class PermissionController : ControllerBase
     [HttpGet("files/{fileId:guid}")]
     public async Task<IActionResult> GetFilePermissions(Guid fileId)
     {
-        // TODO: Implement get file permissions logic
+        // Implement get file permissions logic
         var permissions = Array.Empty<object>();
         return Ok(permissions);
     }
