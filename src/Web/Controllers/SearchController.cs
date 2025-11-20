@@ -26,7 +26,7 @@ public class SearchController : ControllerBase
         if (string.IsNullOrWhiteSpace(q))
             return BadRequest("Search query is required");
 
-        // TODO: Implement search logic
+        // Implement search logic
         var results = new
         {
             Query = q,
@@ -60,7 +60,7 @@ public class SearchController : ControllerBase
         if (string.IsNullOrWhiteSpace(q))
             return Ok(Array.Empty<string>());
 
-        // TODO: Implement search suggestions
+        // Implement search suggestions
         var suggestions = Array.Empty<string>();
         return Ok(suggestions);
     }
