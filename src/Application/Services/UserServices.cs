@@ -1,6 +1,7 @@
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interfaces;
+using Application.Mappings;
 using Domain.Entities;
 using Domain.Monads;
 using Domain.Monads.Result;
@@ -40,29 +41,23 @@ public class UserServices : Service<User>, IUserServices
 
     public async Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id)
     {
-        Maybe<User> user = await FindAsync(id);
+        _logger.LogInformation("Finding user by ID: {Id}", id);
+
+        Maybe<User> user = await FindAsync(id).ConfigureAwait(false);
 
         if (user.IsNone)
         {
+            _logger.LogWarning("User not found by ID: {Id}", id);
             return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
         }
 
-        User userValue = user.Value;
+        var userDto = user.Value.ToDto();
 
-        var userDto = new GetUserResponseUnique(
-            userValue.Id,
-            userValue.FirstName,
-            userValue.LastName,
-            userValue.Email,
-            userValue.Phone
-        );
-
-        if (user == null)
-            return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
-
+        _logger.LogInformation("User found by ID: {Id}", id);
         return ApiResult<GetUserResponseUnique>.Success(userDto, "El usuario se encontro", 200);
     }
 
+    // TODO: Implementar los loggers en este método
     public async Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync()
     {
         try
@@ -297,16 +292,20 @@ public class UserServices : Service<User>, IUserServices
         }
     }
 
+    // TODO: Implementar la lógica para refrescar la autenticación
     public Task<ApiResult<object>> RefreshAuthenticationAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
 
+    // TODO: Implementar la lógica para revocar la autenticación
     public Task RevokeAuthenticationAsync(string refreshToken)
     {
         throw new NotImplementedException();
     }
 
+    // TODO: Crear la lógica para autenticar con Google
+    // TODO: Implementar los loggers en este método
     public Task<ApiResult<object>> AuthenticateWithGoogleAsync(string idToken)
     {
         throw new NotImplementedException();
