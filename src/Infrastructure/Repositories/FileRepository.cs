@@ -5,7 +5,7 @@ namespace Infrastructure.Repositories;
 
 public class FileRepository : IFileRepository
 {
-    public List<FileItem> GetFilesAsync(string path)
+    public ICollection<FileItem> GetFilesAsync(string path)
     {
         string fullPath = Path.Combine(
             "/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR",
