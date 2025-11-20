@@ -1,6 +1,6 @@
 using Application.AutoMapper;
 using Application.DTOs.Request;
-using Application.Interface;
+using Application.Interfaces;
 using Application.Services;
 using Application.Validation;
 using FluentValidation;
