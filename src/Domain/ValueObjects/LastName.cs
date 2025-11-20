@@ -38,5 +38,5 @@ public sealed record LastName
         return Result.Unit;
     }
 
-    public static implicit operator string(LastName lastName) => lastName.Value;
+    public static implicit operator string(LastName lastName) => lastName?.Value ?? throw new ArgumentNullException(nameof(lastName));
 }
