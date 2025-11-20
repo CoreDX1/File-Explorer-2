@@ -27,5 +27,5 @@ public interface IUserServices : IService<User>
     Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user);
     Task InitiatePasswordResetAsync(string email);
     Task<ApiResult<bool>> ResetPasswordAsync(string token, string newPassword);
-    Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id);
+    Task<ApiResult<UserResponse>> FindByIdAsync(int id);
 }
