@@ -1,5 +1,3 @@
-using Domain.ValitMona.Error;
-
 namespace Domain.Monads.Result;
 
 public static class ResultExtensions
