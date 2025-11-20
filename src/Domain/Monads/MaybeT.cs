@@ -7,7 +7,7 @@ public readonly struct Maybe<TValue> : IEquatable<Maybe<TValue>>
 {
     public bool IsSome => Value is not null;
     public bool IsNone => Value is null;
-    public static readonly Maybe<TValue> None = default;
+    public static readonly Maybe<TValue> None;
     public TValue Value { get; }
 
     public Maybe(TValue value) => Value = value;
