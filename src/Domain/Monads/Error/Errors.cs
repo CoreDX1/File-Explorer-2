@@ -1,4 +1,4 @@
-namespace Domain.ValitMona.Error;
+namespace Domain.Monads.Error;
 
 public abstract class Errors
 {
