@@ -1,5 +1,5 @@
 using System.Data;
-using Infrastructure.Interface;
+using Infrastructure.Interfaces;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -10,9 +10,9 @@ namespace Infrastructure;
 public class UnitOfWork : IUnitOfWorkAsync, IDisposable
 {
     private readonly DbContext _context;
-    protected IDbContextTransaction? Transaction;
-    protected Dictionary<string, dynamic> Repositories;
-    private bool _disposed = false;
+    private IDbContextTransaction? Transaction;
+    private Dictionary<string, dynamic> Repositories;
+    private bool _disposed;
 
     public UnitOfWork(DbContext context)
     {
@@ -77,7 +77,7 @@ public class UnitOfWork : IUnitOfWorkAsync, IDisposable
 
     public virtual async Task<int> ExecuteSqlCommandAsync(string sql, params object[] parameters)
     {
-        return await _context.Database.ExecuteSqlRawAsync(sql, parameters);
+        return await _context.Database.ExecuteSqlRawAsync(sql, parameters).ConfigureAwait(false);
     }
 
     public virtual async Task<int> ExecuteSqlCommandAsync(
@@ -86,7 +86,7 @@ public class UnitOfWork : IUnitOfWorkAsync, IDisposable
         params object[] parameters
     )
     {
-        return await _context.Database.ExecuteSqlRawAsync(sql, cancellationToken, parameters);
+        return await _context.Database.ExecuteSqlRawAsync(sql, cancellationToken, parameters).ConfigureAwait(false);
     }
 
     public virtual void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
