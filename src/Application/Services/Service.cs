@@ -15,7 +15,7 @@ public class Service<TEntity> : IService<TEntity>
         _repository = repository;
     }
 
-    public virtual TEntity Find(params object[] keyValues)
+    public virtual TEntity? Find(params object[] keyValues)
     {
         return _repository.Find(keyValues);
     }
@@ -55,12 +55,12 @@ public class Service<TEntity> : IService<TEntity>
         _repository.Delete(entity);
     }
 
-    public virtual async Task<TEntity> FindAsync(params object[] keyValues)
+    public virtual async Task<TEntity?> FindAsync(params object[] keyValues)
     {
         return await _repository.FindAsync(keyValues).ConfigureAwait(false);
     }
 
-    public virtual async Task<TEntity> FindAsync(
+    public virtual async Task<TEntity?> FindAsync(
         CancellationToken cancellationToken,
         params object[] keyValues
     )
