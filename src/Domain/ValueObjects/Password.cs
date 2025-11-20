@@ -45,5 +45,6 @@ public sealed record Password
         return Result.Unit;
     }
 
-    public static implicit operator string(Password password) => password?.Value ?? throw new ArgumentNullException(nameof(password));
+    public static implicit operator string(Password password) =>
+        password?.Value ?? throw new ArgumentNullException(nameof(password));
 }
