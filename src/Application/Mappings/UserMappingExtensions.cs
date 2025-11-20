@@ -7,21 +7,11 @@ public static class UserMappingExtensions
 {
     public static UserResponse ToDto(this User user)
     {
-        return new(
-            user.Id,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.Phone,
-            user.IsActive,
-            user.CreatedAt,
-            user.UpdatedAt,
-            user.LastLoginAt
-        );
+        return new(user.Id, user.FirstName, user.LastName, user.Email, user.Phone);
     }
 
-    public static IEnumerable<UserResponse> ToDtos(this IEnumerable<User> users)
+    public static List<UserResponse> ToDtos(this List<User> users)
     {
-        return users.Select(u => u.ToDto());
+        return users.Select(u => u.ToDto()).ToList();
     }
 }
