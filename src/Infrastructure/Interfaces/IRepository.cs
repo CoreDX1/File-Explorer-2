@@ -5,7 +5,7 @@ namespace Infrastructure.Interfaces;
 public interface IRepository<TEntity>
     where TEntity : class, ITrackable
 {
-    TEntity Find(params object[] keyValues);
+    TEntity? Find(params object[] keyValues);
     IQueryable<TEntity> SelectQuery(string query, params object[] parameters);
     void Insert(TEntity entity, bool traverseGraph = true);
     void ApplyChanges(TEntity entity);
