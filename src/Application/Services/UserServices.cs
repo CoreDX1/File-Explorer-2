@@ -68,7 +68,7 @@ public class UserServices : Service<User>, IUserServices
 
             List<UserResponse> dto = users.ToDtos();
 
-            _logger.LogInformation("Retrieved {Count} users", dto.Count());
+            _logger.LogInformation("Retrieved {Count} users", dto.Count);
 
             return ApiResult<List<UserResponse>>.Success(dto, "Users retrieved successfully", 200);
         }
