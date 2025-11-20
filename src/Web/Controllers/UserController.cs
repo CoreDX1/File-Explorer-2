@@ -1,7 +1,5 @@
-using Application.DTOs.Request;
-using Application.Interface;
-using Domain.Entities;
-using Infrastructure.Interface;
+using Application.Interfaces;
+using Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers;
@@ -22,7 +20,7 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var result = await _userServices.GetAllUsersAsync();
+        var result = await _userServices.GetAllUsersAsync().ConfigureAwait(false);
 
         if (result.Metadata?.StatusCode != 200)
         {
