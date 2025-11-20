@@ -8,7 +8,7 @@ public class FolderRepository : IFolderRepository
 {
     private string FullPath = "/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR";
 
-    public List<DirectoryItem> GetSubFolders(string path)
+    public ICollection<DirectoryItem> GetSubFolders(string path)
     {
         string fullPath = Path.Combine(FullPath, path);
 
@@ -33,7 +33,7 @@ public class FolderRepository : IFolderRepository
         return subFolders;
     }
 
-    public List<FileItem> GetFiles(string path)
+    public ICollection<FileItem> GetFiles(string path)
     {
         string fullPath = Path.Combine(FullPath, path);
 
