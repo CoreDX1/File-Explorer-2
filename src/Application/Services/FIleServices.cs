@@ -1,4 +1,4 @@
-using Application.Interface;
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +39,7 @@ public class FileServices : IFileServices
         throw new NotImplementedException();
     }
 
-    public List<FileItem> GetFiles(string path)
+    public ICollection<FileItem> GetFiles(string path)
     {
         return _fileRepository.GetFilesAsync(path);
     }

@@ -1,6 +1,6 @@
 using Domain.Entities;
 using Infrastructure.Data;
-using Infrastructure.Interface;
+using Infrastructure.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
@@ -8,32 +8,33 @@ namespace Infrastructure.Repositories;
 public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntity>
     where TEntity : Entity
 {
-    protected readonly FileExplorerDbContext _context;
-    protected readonly DbSet<TEntity> _dbSet;
+    private readonly FileExplorerDbContext _context;
+    private readonly DbSet<TEntity> _dbSet;
 
     public Repository(FileExplorerDbContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         _context = context;
         _dbSet = context.Set<TEntity>();
     }
 
     // Find Methods
-    public TEntity Find(params object[] keyValues)
+    public TEntity? Find(params object[] keyValues)
     {
         return _dbSet.Find(keyValues);
     }
 
-    public async Task<TEntity> FindAsync(params object[] keyValues)
+    public async Task<TEntity?> FindAsync(params object[] keyValues)
     {
-        return await _dbSet.FindAsync(keyValues);
+        return await _dbSet.FindAsync(keyValues).ConfigureAwait(false);
     }
 
-    public async Task<TEntity> FindAsync(
+    public async Task<TEntity?> FindAsync(
         CancellationToken cancellationToken,
         params object[] keyValues
     )
     {
-        return await _dbSet.FindAsync(keyValues, cancellationToken);
+        return await _dbSet.FindAsync(keyValues, cancellationToken).ConfigureAwait(false);
     }
 
     // Insert Methods
@@ -88,7 +89,7 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
 
     public async Task<bool> DeleteAsync(params object[] keyValues)
     {
-        return await DeleteAsync(CancellationToken.None, keyValues);
+        return await DeleteAsync(CancellationToken.None, keyValues).ConfigureAwait(false);
     }
 
     public async Task<bool> DeleteAsync(
@@ -96,7 +97,7 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
         params object[] keyValues
     )
     {
-        var entity = await _dbSet.FindAsync(keyValues, cancellationToken);
+        var entity = await _dbSet.FindAsync(keyValues, cancellationToken).ConfigureAwait(false);
         if (entity == null)
             return false;
 
@@ -120,7 +121,7 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
         params object[] parameters
     )
     {
-        return await SelectQueryAsync(query, CancellationToken.None, parameters);
+        return await SelectQueryAsync(query, CancellationToken.None, parameters).ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<TEntity>> SelectQueryAsync(
@@ -129,6 +130,6 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
         params object[] parameters
     )
     {
-        return await _dbSet.FromSqlRaw(query, parameters).ToListAsync(cancellationToken);
+        return await _dbSet.FromSqlRaw(query, parameters).ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 }

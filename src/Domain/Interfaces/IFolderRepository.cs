@@ -4,8 +4,8 @@ namespace Domain.Interfaces;
 
 public interface IFolderRepository
 {
-    public List<DirectoryItem> GetSubFolders(string path);
-    public List<FileItem> GetFiles(string path);
+    public ICollection<DirectoryItem> GetSubFolders(string path);
+    public ICollection<FileItem> GetFiles(string path);
     public string ReadFile(string filePath);
 
     public bool CreateFolder(string path);

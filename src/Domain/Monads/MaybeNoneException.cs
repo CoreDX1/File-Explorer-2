@@ -7,4 +7,7 @@ public class MaybeNoneException : Exception
 
     public MaybeNoneException(string message)
         : base(message) { }
+
+    public MaybeNoneException(string message, Exception innerException)
+        : base(message, innerException) { }
 }

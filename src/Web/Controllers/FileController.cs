@@ -1,4 +1,4 @@
-using Application.Interface;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -55,7 +55,7 @@ public class FileController : ControllerBase
     [HttpPost("{id:guid}/share")]
     public async Task<IActionResult> ShareFile(
         Guid id,
-        [FromBody] Application.Interface.ShareFileRequest request
+        [FromBody] Application.Interfaces.ShareFileRequest request
     )
     {
         var shareLink = await _fileServices.CreateShareLinkAsync(id, request);

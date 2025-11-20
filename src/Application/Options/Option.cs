@@ -1,26 +1,20 @@
 namespace Application.Options;
 
-public abstract class Option<T>
+public abstract class Optional<T>
 {
-    private Option() { }
+    private Optional() { }
 
-    public sealed class Some : Option<T>
+    internal sealed class Some(T value) : Optional<T>
     {
-        public T Value { get; }
-
-        public Some(T value) => Value = value;
+        public T Value { get; } = value;
     }
 
-    public sealed class None : Option<T> { }
-
-    public static Option<T> FromValue(T value) => new Some(value);
-
-    public static Option<T> Empty() => new None();
+    internal sealed class None : Optional<T> { }
 }
 
-public static class Option
+public static class Optional
 {
-    public static Option<T> Some<T>(T value) => Option<T>.FromValue(value);
+    public static Optional<T> Some<T>(T value) => new Optional<T>.Some(value);
 
-    public static Option<T> None<T>() => Option<T>.Empty();
+    public static Optional<T> None<T>() => new Optional<T>.None();
 }

@@ -1,11 +1,11 @@
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 
-namespace Application.Interface;
+namespace Application.Interfaces;
 
 public interface IFileServices
 {
-    public List<FileItem> GetFiles(string path);
+    public ICollection<FileItem> GetFiles(string path);
     public string ReadFile(string filePath);
 
     // New methods for FileController
@@ -21,7 +21,7 @@ public record FileUploadResult(Guid Id, string FileName, long Size);
 
 public record FileDownloadResult(Stream Stream, string ContentType, string FileName);
 
-public record ShareLinkResult(string ShareUrl, DateTime ExpiresAt);
+public record ShareLinkResult(Uri ShareUrl, DateTime ExpiresAt);
 
 public record ShareFileRequest(string Email, string Permission, DateTime? ExpiresAt);
 

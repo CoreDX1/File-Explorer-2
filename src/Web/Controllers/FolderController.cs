@@ -1,4 +1,4 @@
-using Application.Interface;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,15 +22,15 @@ public class FolderController : ControllerBase
     public IActionResult GetFolders([FromQuery] string path = "")
     {
         _logger.LogInformation("Getting folders for path: {Path}", path);
-        
+
         var result = _folderServices.GetSubFolders(path);
-        
+
         if (!result.IsSuccess)
         {
             _logger.LogWarning("Failed to get folders for path: {Path}", path);
             return NotFound(new { message = result.Errors });
         }
-        
+
         _logger.LogInformation("Retrieved {Count} folders for path: {Path}", result.Value.Count, path);
         return Ok(result.Value);
     }
@@ -39,15 +39,15 @@ public class FolderController : ControllerBase
     public IActionResult GetFiles([FromQuery] string path = "")
     {
         _logger.LogInformation("Getting files for path: {Path}", path);
-        
+
         var result = _folderServices.GetFiles(path);
-        
+
         if (!result.IsSuccess)
         {
             _logger.LogWarning("Failed to get files for path: {Path}", path);
             return NotFound(new { message = result.Errors });
         }
-        
+
         _logger.LogInformation("Retrieved {Count} files for path: {Path}", result.Value.Count, path);
         return Ok(result.Value);
     }

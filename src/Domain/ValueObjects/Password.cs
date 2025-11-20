@@ -37,7 +37,7 @@ public sealed record Password
         if (!password.Any(char.IsDigit))
             return Result.Failure<Unit>("La contraseña debe contener al menos un número");
 
-        if (!password.Any(c => "@$!%*?&#^_-".Contains(c)))
+        if (!password.Any(c => "@$!%*?&#^_-".Contains(c, StringComparison.Ordinal)))
             return Result.Failure<Unit>(
                 "La contraseña debe contener al menos un carácter especial (@$!%*?&#^_-)"
             );
@@ -45,5 +45,5 @@ public sealed record Password
         return Result.Unit;
     }
 
-    public static implicit operator string(Password password) => password.Value;
+    public static implicit operator string(Password password) => password?.Value ?? throw new ArgumentNullException(nameof(password));
 }

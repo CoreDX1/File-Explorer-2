@@ -23,6 +23,7 @@ public class JwtTokenService : IJwtTokenService
 
     public JwtTokenService(IOptions<JwtSettings> jwtSettings)
     {
+        ArgumentNullException.ThrowIfNull(jwtSettings);
         _jwtSettings = jwtSettings.Value;
         if (string.IsNullOrWhiteSpace(_jwtSettings.SecretKey) || _jwtSettings.SecretKey.Length < 32)
             throw new ArgumentException("JWT SecretKey must be at least 32 characters long");
@@ -41,7 +42,7 @@ public class JwtTokenService : IJwtTokenService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(
                 JwtRegisteredClaimNames.Iat,
-                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture),
                 ClaimValueTypes.Integer64
             ),
         };
@@ -78,7 +79,7 @@ public class JwtTokenService : IJwtTokenService
 
             return tokenHandler.ValidateToken(token, validationParameters, out _);
         }
-        catch
+        catch (SecurityTokenException)
         {
             return null;
         }

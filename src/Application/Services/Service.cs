@@ -1,6 +1,6 @@
-using Application.Interface;
+using Application.Interfaces;
 using Domain.Entities;
-using Infrastructure.Interface;
+using Infrastructure.Interfaces;
 using TrackableEntities.Common.Core;
 
 namespace Application.Services;
@@ -57,7 +57,7 @@ public class Service<TEntity> : IService<TEntity>
 
     public virtual async Task<TEntity> FindAsync(params object[] keyValues)
     {
-        return await _repository.FindAsync(keyValues);
+        return await _repository.FindAsync(keyValues).ConfigureAwait(false);
     }
 
     public virtual async Task<TEntity> FindAsync(
@@ -65,12 +65,12 @@ public class Service<TEntity> : IService<TEntity>
         params object[] keyValues
     )
     {
-        return await _repository.FindAsync(cancellationToken, keyValues);
+        return await _repository.FindAsync(cancellationToken, keyValues).ConfigureAwait(false);
     }
 
     public virtual async Task<bool> DeleteAsync(params object[] keyValues)
     {
-        return await DeleteAsync(CancellationToken.None, keyValues);
+        return await DeleteAsync(CancellationToken.None, keyValues).ConfigureAwait(false);
     }
 
     public virtual async Task<bool> DeleteAsync(
@@ -78,7 +78,7 @@ public class Service<TEntity> : IService<TEntity>
         params object[] keyValues
     )
     {
-        return await _repository.DeleteAsync(cancellationToken, keyValues);
+        return await _repository.DeleteAsync(cancellationToken, keyValues).ConfigureAwait(false);
     }
 
     public IQueryable<TEntity> Queryable()

@@ -1,8 +1,7 @@
 using System.Data;
-using Infrastructure.Interface;
 using TrackableEntities.Common.Core;
 
-namespace Infrastructure.Interface;
+namespace Infrastructure.Interfaces;
 
 public interface IUnitOfWork
 {

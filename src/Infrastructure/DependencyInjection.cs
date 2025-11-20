@@ -1,6 +1,6 @@
 using Domain.Interfaces;
 using Infrastructure.Data;
-using Infrastructure.Interface;
+using Infrastructure.Interfaces;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +30,7 @@ public static class DependencyInjection
         // Repository registration (optional if using Unit of Work)
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<IFolderRepository, FolderRepository>();
-        
+
         // Generic repository registration
         services.AddScoped(typeof(IRepositoryAsync<>), typeof(Repository<>));
     }

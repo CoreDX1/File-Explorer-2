@@ -3,7 +3,7 @@ using Application.DTOs.Response;
 using Domain.Entities;
 using Domain.Monads;
 
-namespace Application.Interface;
+namespace Application.Interfaces;
 
 /// <summary>
 /// Add any business logic methods here
@@ -22,7 +22,7 @@ public interface IUserServices : IService<User>
     Task<ApiResult<object>> RefreshAuthenticationAsync(string refreshToken);
     Task RevokeAuthenticationAsync(string refreshToken);
     Task<ApiResult<object>> AuthenticateWithGoogleAsync(string idToken);
-    
+
     // User management methods
     Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user);
     Task InitiatePasswordResetAsync(string email);

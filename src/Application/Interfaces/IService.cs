@@ -1,6 +1,6 @@
 using TrackableEntities.Common.Core;
 
-namespace Application.Interface;
+namespace Application.Interfaces;
 
 public interface IService<TEntity>
     where TEntity : ITrackable

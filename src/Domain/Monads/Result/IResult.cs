@@ -1,4 +1,4 @@
-using Domain.ValitMona.Error;
+using Domain.Monads.Error;
 
 namespace Domain.Monads.Result;
 

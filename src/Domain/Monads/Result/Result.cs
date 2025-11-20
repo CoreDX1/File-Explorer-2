@@ -1,4 +1,4 @@
-using Domain.ValitMona.Error;
+using Domain.Monads.Error;
 
 namespace Domain.Monads.Result;
 
@@ -15,9 +15,8 @@ public static class Result
 
 public readonly struct Result<T> : IResult<T>
 {
-    private readonly T _value;
-    private readonly Errors _error;
-    private readonly List<Errors> _Listerror;
+    private readonly T? _value;
+    private readonly Errors? _error;
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
@@ -90,4 +89,20 @@ public readonly struct Result<T> : IResult<T>
     public static implicit operator Result<T>(T value) => new(value);
 
     public static implicit operator Result<T>(Errors error) => new(error);
+
+    public override bool Equals(object? obj) => obj is Result<T> other && Equals(other);
+
+    public bool Equals(Result<T> other) =>
+        IsSuccess == other.IsSuccess
+        && (
+            IsSuccess
+                ? EqualityComparer<T>.Default.Equals(_value, other._value)
+                : EqualityComparer<Errors>.Default.Equals(_error, other._error)
+        );
+
+    public override int GetHashCode() => HashCode.Combine(IsSuccess, _value, _error);
+
+    public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);
+
+    public static bool operator !=(Result<T> left, Result<T> right) => !left.Equals(right);
 }

@@ -1,13 +1,13 @@
 using Application.DTOs.Request;
 using Application.DTOs.Response;
-using Application.Interface;
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Monads;
 using Domain.Monads.Result;
 using Domain.ValueObjects;
 using FluentValidation;
 using FluentValidation.Results;
-using Infrastructure.Interface;
+using Infrastructure.Interfaces;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -40,14 +40,21 @@ public class UserServices : Service<User>, IUserServices
 
     public async Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id)
     {
-        User? user = await FindAsync(id);
+        Maybe<User> user = await FindAsync(id);
+
+        if (user.IsNone)
+        {
+            return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
+        }
+
+        User userValue = user.Value;
 
         var userDto = new GetUserResponseUnique(
-            user.Id,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.Phone
+            userValue.Id,
+            userValue.FirstName,
+            userValue.LastName,
+            userValue.Email,
+            userValue.Phone
         );
 
         if (user == null)
@@ -62,7 +69,7 @@ public class UserServices : Service<User>, IUserServices
         {
             var query = Queryable().AsNoTracking().OrderBy(u => u.Id);
 
-            var users = await query.ToListAsync();
+            var users = await query.ToListAsync().ConfigureAwait(false);
 
             var dto = users.Adapt<List<GetUserResponse>>();
 
@@ -74,16 +81,18 @@ public class UserServices : Service<User>, IUserServices
                 200
             );
         }
-        catch (Exception ex)
+        catch (DbUpdateException dbEx)
         {
-            _logger.LogError(ex, "Error retrieving users");
-            return ApiResult<List<GetUserResponse>>.Error("Error retrieving users", 500);
+            _logger.LogError(dbEx, "Database error retrieving users");
+            return ApiResult<List<GetUserResponse>>.Error("Database error occurred", 500);
         }
     }
 
     public async Task<Maybe<User>> FindByEmailAsync(string email)
     {
-        User? user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
+        User? user = await Queryable()
+            .FirstOrDefaultAsync(u => u.Email == email)
+            .ConfigureAwait(false);
         return Maybe.From(user);
     }
 
@@ -129,7 +138,7 @@ public class UserServices : Service<User>, IUserServices
                 );
 
                 Update(user);
-                await _unitOfwork.SaveChangesAsync();
+                await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
                 // Usuario ya quedó bloqueado: informamos lockout con intento final
                 return ApiResult<LoginResponse>.Error(
@@ -150,7 +159,7 @@ public class UserServices : Service<User>, IUserServices
                 );
 
                 Update(user);
-                await _unitOfwork.SaveChangesAsync();
+                await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
                 // Message includes current attempt and total allowed attempts
                 return ApiResult<LoginResponse>.Error(
@@ -165,10 +174,14 @@ public class UserServices : Service<User>, IUserServices
         user.LockoutEnd = null;
         user.LastLoginAt = DateTime.UtcNow;
 
-        string token = _jwtTokenService.GenerateToken(user.Id.ToString(), user.Email, "User");
+        string token = _jwtTokenService.GenerateToken(
+            user.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            user.Email,
+            "User"
+        );
 
         Update(user);
-        await _unitOfwork.SaveChangesAsync();
+        await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
         LoginResponse userMapper = new(
             user.Email,
@@ -200,6 +213,7 @@ public class UserServices : Service<User>, IUserServices
     /// </remarks>
     public async Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         try
         {
             _logger.LogInformation(
@@ -210,7 +224,9 @@ public class UserServices : Service<User>, IUserServices
             );
 
             // 1. Validate request
-            ValidationResult validatorResult = await _validator.ValidateAsync(request);
+            ValidationResult validatorResult = await _validator
+                .ValidateAsync(request)
+                .ConfigureAwait(false);
 
             if (!validatorResult.IsValid)
             {
@@ -224,7 +240,7 @@ public class UserServices : Service<User>, IUserServices
             }
 
             // 2. Check if user already exists
-            var maybeUser = await FindByEmailAsync(request.Email);
+            var maybeUser = await FindByEmailAsync(request.Email).ConfigureAwait(false);
             if (maybeUser.IsSome)
             {
                 _logger.LogWarning(
@@ -244,11 +260,11 @@ public class UserServices : Service<User>, IUserServices
 
             // 5. Persist to database
             Insert(userToCreate);
-            await _unitOfwork.SaveChangesAsync();
+            await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
             // 6. Generate JWT token for automatic login
             string token = _jwtTokenService.GenerateToken(
-                userToCreate.Id.ToString(),
+                userToCreate.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 userToCreate.Email,
                 "User"
             );
@@ -274,10 +290,10 @@ public class UserServices : Service<User>, IUserServices
             _logger.LogError(dbEx, "Database error creating user {Email}", request.Email);
             return ApiResult<LoginResponse>.Error("Database error occurred", 500);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException opEx)
         {
-            _logger.LogError(ex, "Unexpected error creating user {Email}", request.Email);
-            return ApiResult<LoginResponse>.Error($"Error creating user: {ex.Message}", 500);
+            _logger.LogError(opEx, "Operation error creating user {Email}", request.Email);
+            return ApiResult<LoginResponse>.Error($"Error creating user: {opEx.Message}", 500);
         }
     }
 
@@ -310,8 +326,8 @@ public class UserServices : Service<User>, IUserServices
             return;
         }
 
-        var maybeUser = await FindByEmailAsync(email);
-        
+        var maybeUser = await FindByEmailAsync(email).ConfigureAwait(false);
+
         if (maybeUser.IsNone)
         {
             _logger.LogWarning("Password reset requested for non-existent email: {Email}", email);
@@ -326,7 +342,7 @@ public class UserServices : Service<User>, IUserServices
         user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
 
         Update(user);
-        await _unitOfwork.SaveChangesAsync();
+        await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
         _logger.LogInformation(
             "Password reset token generated for user {UserId}. Token: {Token}",
@@ -341,19 +357,20 @@ public class UserServices : Service<User>, IUserServices
     /// <summary>
     /// Updates user profile. Password only updated if provided.
     /// </summary>
-    public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest request)
+    public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user)
     {
+        ArgumentNullException.ThrowIfNull(user);
         try
         {
-            _logger.LogInformation("Starting user profile update for ID: {}", request.Id);
+            _logger.LogInformation("Starting user profile update for ID: {}", user.Id);
 
             var validationResult = new[]
             {
-                Email.Validate(request.Email),
-                ValidateId(request.Id),
-                Password.ValidatePasswordIfProvided(request.Password),
-                FirstName.Validate(request.FirstName),
-                LastName.Validate(request.LastName),
+                Email.Validate(user.Email),
+                ValidateId(user.Id),
+                Password.ValidatePasswordIfProvided(user.Password),
+                FirstName.Validate(user.FirstName),
+                LastName.Validate(user.LastName),
             };
 
             // Validate data
@@ -363,61 +380,61 @@ public class UserServices : Service<User>, IUserServices
             {
                 _logger.LogWarning(
                     "Validation failed when editing user {UserId}. Errors: {Errors}",
-                    request.Id,
+                    user.Id,
                     string.Join(", ", errors)
                 );
                 return ApiResult<bool>.Error(errors, 400);
             }
 
-            Maybe<User> maybeUser = await FindAsync(request.Id);
+            Maybe<User> maybeUser = await FindAsync(user.Id).ConfigureAwait(false);
 
             if (maybeUser.IsNone)
             {
-                _logger.LogWarning("User not found when editing: ID {UserId}", request.Id);
+                _logger.LogWarning("User not found when editing: ID {UserId}", user.Id);
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
-            User user = maybeUser.Value;
+            User userEntity = maybeUser.Value;
 
             // Check if email is already in use by another user
-            var maybeUserWithEmail = await FindByEmailAsync(request.Email);
+            var maybeUserWithEmail = await FindByEmailAsync(user.Email).ConfigureAwait(false);
 
-            if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != user.Id)
+            if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != userEntity.Id)
             {
                 _logger.LogWarning(
                     "Email {Email} is already in use by another user (ID {ExistingId})",
-                    request.Email,
+                    user.Email,
                     maybeUserWithEmail.Value.Id
                 );
                 return ApiResult<bool>.Error("Email already in use", 409);
             }
 
             // Update entity
-            user.UpdateProfile(request.FirstName, request.LastName, request.Phone, request.Email);
+            userEntity.UpdateProfile(user.FirstName, user.LastName, user.Phone, user.Email);
 
             // Only change password when a new one is provided
-            if (!string.IsNullOrWhiteSpace(request.Password))
+            if (!string.IsNullOrWhiteSpace(user.Password))
             {
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-                _logger.LogInformation("Password updated for user {UserId}", user.Id);
+                userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password);
+                _logger.LogInformation("Password updated for user {UserId}", userEntity.Id);
             }
 
-            Update(user);
+            Update(userEntity);
 
-            await _unitOfwork.SaveChangesAsync();
+            await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
-            _logger.LogInformation("User {UserId} updated successfully", user.Id);
+            _logger.LogInformation("User {UserId} updated successfully", userEntity.Id);
 
             return ApiResult<bool>.Success(true, "User updated successfully", 200);
         }
         catch (DbUpdateException dbEx)
         {
-            _logger.LogError(dbEx, "Database error updating user {UserId}", request.Id);
+            _logger.LogError(dbEx, "Database error updating user {UserId}", user.Id);
             return ApiResult<bool>.Error("Error saving changes to database", 500);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException opEx)
         {
-            _logger.LogError(ex, "Unexpected error editing user {UserId}", request.Id);
+            _logger.LogError(opEx, "Operation error editing user {UserId}", user.Id);
             return ApiResult<bool>.Error("Internal server error", 500);
         }
     }
@@ -439,7 +456,8 @@ public class UserServices : Service<User>, IUserServices
             }
 
             var user = await Queryable()
-                .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+                .FirstOrDefaultAsync(u => u.PasswordResetToken == token)
+                .ConfigureAwait(false);
 
             if (user == null)
             {
@@ -447,7 +465,10 @@ public class UserServices : Service<User>, IUserServices
                 return ApiResult<bool>.Error("Invalid or expired reset token", 400);
             }
 
-            if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            if (
+                user.PasswordResetTokenExpiry == null
+                || user.PasswordResetTokenExpiry < DateTime.UtcNow
+            )
             {
                 _logger.LogWarning("Expired password reset token for user {UserId}", user.Id);
                 return ApiResult<bool>.Error("Reset token has expired", 400);
@@ -459,15 +480,15 @@ public class UserServices : Service<User>, IUserServices
             user.UpdatedAt = DateTime.UtcNow;
 
             Update(user);
-            await _unitOfwork.SaveChangesAsync();
+            await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
             _logger.LogInformation("Password reset successfully for user {UserId}", user.Id);
 
             return ApiResult<bool>.Success(true, "Password reset successfully", 200);
         }
-        catch (Exception ex)
+        catch (DbUpdateException dbEx)
         {
-            _logger.LogError(ex, "Error resetting password");
+            _logger.LogError(dbEx, "Database error resetting password");
             return ApiResult<bool>.Error("Internal server error", 500);
         }
     }

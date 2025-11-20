@@ -11,7 +11,7 @@ public class User : Entity
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 
-    public int FailedLoginAttemts { get; set; } = 0;
+    public int FailedLoginAttemts { get; set; }
     public DateTime? LockoutEnd { get; set; }
     public long StorageQuotaBytes { get; set; } = 5368709120; // 5 GB default quota
 

@@ -1,7 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 
-namespace Application.Interface;
+namespace Application.Interfaces;
 
 public interface IFolderServices
 {
@@ -24,7 +24,7 @@ public interface IFolderServices
 
 public record FolderItem(Guid Id, string Name, Guid? ParentFolderId, DateTime CreatedAt);
 
-public record FolderContentsResult(List<FolderItem> Folders, List<FileItem> Files);
+public record FolderContentsResult(ICollection<FolderItem> Folders, ICollection<FileItem> Files);
 
 public record CreateFolderRequest(string Name, Guid? ParentFolderId);
 

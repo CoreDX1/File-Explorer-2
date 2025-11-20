@@ -9,5 +9,5 @@ public abstract class Entity : ITrackable
     public TrackingState TrackingState { get; set; }
 
     [NotMapped]
-    public ICollection<string> ModifiedProperties { get; set; }
+    public ICollection<string> ModifiedProperties { get; set; } = [];
 }
