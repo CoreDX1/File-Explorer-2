@@ -106,7 +106,7 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            new string[] { }
+            Array.Empty<string>()
         }
     });
 });
@@ -135,4 +135,4 @@ app.UseCors(AllowOrigins); // Asegúrate de llamarlo antes de MapControllers
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync().ConfigureAwait(false);
