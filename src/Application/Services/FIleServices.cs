@@ -73,7 +73,7 @@ public class FileServices : IFileServices
 
         using (var stream = new FileStream(physicalPath, FileMode.Create))
         {
-            await file.CopyToAsync(stream);
+            await file.CopyToAsync(stream).ConfigureAwait(false);
         }
 
         var fileEntity = new FileItem(

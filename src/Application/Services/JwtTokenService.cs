@@ -42,7 +42,9 @@ public class JwtTokenService : IJwtTokenService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(
                 JwtRegisteredClaimNames.Iat,
-                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture),
+                DateTimeOffset
+                    .UtcNow.ToUnixTimeSeconds()
+                    .ToString(System.Globalization.CultureInfo.InvariantCulture),
                 ClaimValueTypes.Integer64
             ),
         };

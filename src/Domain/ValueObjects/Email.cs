@@ -25,5 +25,6 @@ public sealed record Email
         return Result.Unit;
     }
 
-    public static implicit operator string(Email email) => email?.Value ?? throw new ArgumentNullException(nameof(email));
+    public static implicit operator string(Email email) =>
+        email?.Value ?? throw new ArgumentNullException(nameof(email));
 }

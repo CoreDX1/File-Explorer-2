@@ -121,7 +121,8 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
         params object[] parameters
     )
     {
-        return await SelectQueryAsync(query, CancellationToken.None, parameters).ConfigureAwait(false);
+        return await SelectQueryAsync(query, CancellationToken.None, parameters)
+            .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<TEntity>> SelectQueryAsync(
@@ -130,6 +131,9 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
         params object[] parameters
     )
     {
-        return await _dbSet.FromSqlRaw(query, parameters).ToListAsync(cancellationToken).ConfigureAwait(false);
+        return await _dbSet
+            .FromSqlRaw(query, parameters)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }

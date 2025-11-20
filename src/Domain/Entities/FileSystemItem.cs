@@ -10,7 +10,13 @@ public abstract class FileSystemItem
     public bool IsDirectory { get; protected set; }
     public FileSystemItemType ItemType { get; protected set; }
 
-    protected FileSystemItem(string name, string path, long size, DateTime createdAt, DateTime modifiedAt)
+    protected FileSystemItem(
+        string name,
+        string path,
+        long size,
+        DateTime createdAt,
+        DateTime modifiedAt
+    )
     {
         Name = name;
         Path = path;
@@ -23,5 +29,5 @@ public abstract class FileSystemItem
 public enum FileSystemItemType
 {
     File,
-    Directory
+    Directory,
 }

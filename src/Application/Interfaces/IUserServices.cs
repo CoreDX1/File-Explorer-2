@@ -11,7 +11,7 @@ namespace Application.Interfaces;
 public interface IUserServices : IService<User>
 {
     public Task<Maybe<User>> FindByEmailAsync(string email);
-    public Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync();
+    public Task<ApiResult<List<UserResponse>>> GetAllUsersAsync();
 
     // public Task<ApiResult<CreateUserResponse>> CreateUser(CreateUserRequest request);
     // public Task<ApiResult<LoginResponse>> Login(string email, string password);
@@ -27,5 +27,5 @@ public interface IUserServices : IService<User>
     Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user);
     Task InitiatePasswordResetAsync(string email);
     Task<ApiResult<bool>> ResetPasswordAsync(string token, string newPassword);
-    Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id);
+    Task<ApiResult<UserResponse>> FindByIdAsync(int id);
 }
