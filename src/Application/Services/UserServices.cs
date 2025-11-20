@@ -39,7 +39,7 @@ public class UserServices : Service<User>, IUserServices
         _logger = logger;
     }
 
-    public async Task<ApiResult<GetUserResponseUnique>> FindByIdAsync(int id)
+    public async Task<ApiResult<UserResponse>> FindByIdAsync(int id)
     {
         _logger.LogInformation("Finding user by ID: {Id}", id);
 
@@ -48,38 +48,34 @@ public class UserServices : Service<User>, IUserServices
         if (user.IsNone)
         {
             _logger.LogWarning("User not found by ID: {Id}", id);
-            return ApiResult<GetUserResponseUnique>.Error("No se encontro al usuario", 501);
+            return ApiResult<UserResponse>.Error("No se encontro al usuario", 501);
         }
 
         var userDto = user.Value.ToDto();
 
         _logger.LogInformation("User found by ID: {Id}", id);
-        return ApiResult<GetUserResponseUnique>.Success(userDto, "El usuario se encontro", 200);
+        return ApiResult<UserResponse>.Success(userDto, "El usuario se encontro", 200);
     }
 
     // TODO: Implementar los loggers en este método
-    public async Task<ApiResult<List<GetUserResponse>>> GetAllUsersAsync()
+    public async Task<ApiResult<List<UserResponse>>> GetAllUsersAsync()
     {
         try
         {
             var query = Queryable().AsNoTracking().OrderBy(u => u.Id);
 
-            var users = await query.ToListAsync().ConfigureAwait(false);
+            List<User> users = await query.ToListAsync().ConfigureAwait(false);
 
-            var dto = users.Adapt<List<GetUserResponse>>();
+            List<UserResponse> dto = users.ToDtos();
 
-            _logger.LogInformation("Retrieved {Count} users", dto.Count);
+            _logger.LogInformation("Retrieved {Count} users", dto.Count());
 
-            return ApiResult<List<GetUserResponse>>.Success(
-                dto,
-                "Users retrieved successfully",
-                200
-            );
+            return ApiResult<List<UserResponse>>.Success(dto, "Users retrieved successfully", 200);
         }
         catch (DbUpdateException dbEx)
         {
             _logger.LogError(dbEx, "Database error retrieving users");
-            return ApiResult<List<GetUserResponse>>.Error("Database error occurred", 500);
+            return ApiResult<List<UserResponse>>.Error("Database error occurred", 500);
         }
     }
 
