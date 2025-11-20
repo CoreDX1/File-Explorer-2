@@ -1,6 +1,6 @@
 using Application.DTOs.Request;
 using Application.DTOs.Response;
-using Application.Interface;
+using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,7 +22,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var result = await _userServices.AuthenticateUserAsync(request.Email, request.Password);
+        ArgumentNullException.ThrowIfNull(request);
+        var result = await _userServices.AuthenticateUserAsync(request.Email, request.Password).ConfigureAwait(false);
 
         if (result.Metadata is null)
         {
@@ -52,7 +53,8 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
     {
-        var result = await _userServices.RegisterUserAsync(request);
+        ArgumentNullException.ThrowIfNull(request);
+        var result = await _userServices.RegisterUserAsync(request).ConfigureAwait(false);
 
         if (result.Metadata?.StatusCode != 201)
             return BadRequest(new { message = result.Metadata?.Message });
@@ -63,7 +65,8 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
-        var result = await _userServices.RefreshAuthenticationAsync(request.RefreshToken);
+        ArgumentNullException.ThrowIfNull(request);
+        var result = await _userServices.RefreshAuthenticationAsync(request.RefreshToken).ConfigureAwait(false);
 
         if (result.Metadata?.StatusCode != 200)
             return Unauthorized(new { message = "Invalid refresh token" });
@@ -74,14 +77,16 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
     {
-        await _userServices.RevokeAuthenticationAsync(request.RefreshToken);
+        ArgumentNullException.ThrowIfNull(request);
+        await _userServices.RevokeAuthenticationAsync(request.RefreshToken).ConfigureAwait(false);
         return NoContent();
     }
 
     [HttpPost("google")]
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
     {
-        var result = await _userServices.AuthenticateWithGoogleAsync(request.IdToken);
+        ArgumentNullException.ThrowIfNull(request);
+        var result = await _userServices.AuthenticateWithGoogleAsync(request.IdToken).ConfigureAwait(false);
 
         if (result.Metadata?.StatusCode != 200)
             return BadRequest(new { message = result.Metadata?.Message });
@@ -92,32 +97,34 @@ public class AuthController : ControllerBase
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
-        await _userServices.InitiatePasswordResetAsync(request.Email);
+        ArgumentNullException.ThrowIfNull(request);
+        await _userServices.InitiatePasswordResetAsync(request.Email).ConfigureAwait(false);
         return Ok(new { message = "Password reset email sent" });
     }
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
-        var result = await _userServices.ResetPasswordAsync(request.Token, request.NewPassword);
-        
+        ArgumentNullException.ThrowIfNull(request);
+        var result = await _userServices.ResetPasswordAsync(request.Token, request.NewPassword).ConfigureAwait(false);
+
         if (result.Metadata?.StatusCode != 200)
             return BadRequest(result);
-        
+
         return Ok(result);
     }
 
     [HttpPut("editUser")]
     public async Task<IActionResult> Update([FromBody] EditUserRequest request)
     {
-        var result = await _userServices.UpdateUserProfileAsync(request);
+        var result = await _userServices.UpdateUserProfileAsync(request).ConfigureAwait(false);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> FindByIdAsync(int id)
     {
-        var result = await _userServices.FindByIdAsync(id);
+        var result = await _userServices.FindByIdAsync(id).ConfigureAwait(false);
         return Ok(result);
     }
 }
