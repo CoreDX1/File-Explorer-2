@@ -116,16 +116,16 @@ public class UserServices : Service<User>, IUserServices
         // Validate password
         if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            user.FailedLoginAttemts++;
+            user.FailedLoginAttempts++;
 
-            if (user.FailedLoginAttemts >= _lockoutOptions.MaxFailedAccessAttempts)
+            if (user.FailedLoginAttempts >= _lockoutOptions.MaxFailedAccessAttempts)
             {
                 user.LockoutEnd = DateTime.UtcNow.Add(_lockoutOptions.DefaultLockoutTimeSpan);
                 _logger.LogWarning(
                     "User {Email} locked out until {LockoutEnd} after {Attempts} failed attempts",
                     email,
                     user.LockoutEnd.Value,
-                    user.FailedLoginAttemts
+                    user.FailedLoginAttempts
                 );
 
                 Update(user);
@@ -133,19 +133,19 @@ public class UserServices : Service<User>, IUserServices
 
                 // Usuario ya quedó bloqueado: informamos lockout con intento final
                 return ApiResult<LoginResponse>.Error(
-                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}. Try again later.",
+                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttempts} of {_lockoutOptions.MaxFailedAccessAttempts}. Try again later.",
                     403
                 );
             }
             else
             {
                 int remainingAttempts =
-                    _lockoutOptions.MaxFailedAccessAttempts - user.FailedLoginAttemts;
+                    _lockoutOptions.MaxFailedAccessAttempts - user.FailedLoginAttempts;
 
                 _logger.LogWarning(
                     "Authentication failed: Invalid password for {Email}. Failed attempts: {Attempts}, Remaining before lockout: {Remaining}",
                     email,
-                    user.FailedLoginAttemts,
+                    user.FailedLoginAttempts,
                     remainingAttempts
                 );
 
@@ -154,14 +154,14 @@ public class UserServices : Service<User>, IUserServices
 
                 // Message includes current attempt and total allowed attempts
                 return ApiResult<LoginResponse>.Error(
-                    $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}.",
+                    $"Invalid credentials. Attempt {user.FailedLoginAttempts} of {_lockoutOptions.MaxFailedAccessAttempts}.",
                     401
                 );
             }
         }
 
         // Successful authentication: reset counters
-        user.FailedLoginAttemts = 0;
+        user.FailedLoginAttempts = 0;
         user.LockoutEnd = null;
         user.LastLoginAt = DateTime.UtcNow;
 
@@ -352,84 +352,107 @@ public class UserServices : Service<User>, IUserServices
     /// <summary>
     /// Updates user profile. Password only updated if provided.
     /// </summary>
-    public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest user)
+    public async Task<ApiResult<bool>> UpdateUserProfileAsync(EditUserRequest request)
     {
-        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(request);
         try
         {
-            _logger.LogInformation("Starting user profile update for ID: {}", user.Id);
+            _logger.LogInformation("Starting user profile update for ID: {UserId}", request.Id);
 
-            var validationResult = new[]
+            if (request.Id <= 0)
             {
-                Email.Validate(user.Email),
-                ValidateId(user.Id),
-                Password.ValidatePasswordIfProvided(user.Password),
-                FirstName.Validate(user.FirstName),
-                LastName.Validate(user.LastName),
-            };
-
-            // Validate data
-            string[] errors = GetErrors(validationResult);
-
-            if (errors.Length > 0)
-            {
-                _logger.LogWarning(
-                    "Validation failed when editing user {UserId}. Errors: {Errors}",
-                    user.Id,
-                    string.Join(", ", errors)
-                );
-                return ApiResult<bool>.Error(errors, 400);
+                _logger.LogWarning("Invalid user ID: {UserId}", request.Id);
+                return ApiResult<bool>.Error("User ID must be greater than zero", 400);
             }
 
-            Maybe<User> maybeUser = await FindAsync(user.Id).ConfigureAwait(false);
+            Maybe<User> maybeUser = await FindAsync(request.Id).ConfigureAwait(false);
 
             if (maybeUser.IsNone)
             {
-                _logger.LogWarning("User not found when editing: ID {UserId}", user.Id);
+                _logger.LogWarning("User not found when editing: ID {UserId}", request.Id);
                 return ApiResult<bool>.Error("User not found", 404);
             }
 
-            User userEntity = maybeUser.Value;
+            User user = maybeUser.Value;
 
             // Check if email is already in use by another user
-            var maybeUserWithEmail = await FindByEmailAsync(user.Email).ConfigureAwait(false);
+            var maybeUserWithEmail = await FindByEmailAsync(request.Email).ConfigureAwait(false);
 
-            if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != userEntity.Id)
+            if (maybeUserWithEmail.IsSome && maybeUserWithEmail.Value.Id != user.Id)
             {
                 _logger.LogWarning(
                     "Email {Email} is already in use by another user (ID {ExistingId})",
-                    user.Email,
+                    request.Email,
                     maybeUserWithEmail.Value.Id
                 );
                 return ApiResult<bool>.Error("Email already in use", 409);
             }
 
-            // Update entity
-            userEntity.UpdateProfile(user.FirstName, user.LastName, user.Phone, user.Email);
+            // Update profile using domain method
+            var updateResult = user.UpdateProfile(
+                request.FirstName,
+                request.LastName,
+                request.Phone,
+                request.Email
+            );
 
-            // Only change password when a new one is provided
-            if (!string.IsNullOrWhiteSpace(user.Password))
+            if (updateResult.IsFailure)
             {
-                userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password);
-                _logger.LogInformation("Password updated for user {UserId}", userEntity.Id);
+                _logger.LogWarning(
+                    "Validation failed when editing user {UserId}. Error: {Error}",
+                    request.Id,
+                    updateResult.GetErrorOrThrow().Message
+                );
+                return ApiResult<bool>.Error(updateResult.GetErrorOrThrow().Message, 400);
             }
 
-            Update(userEntity);
+            // Update password if provided
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                var passwordResult = Password.ValidatePasswordIfProvided(request.Password);
+                if (passwordResult.IsFailure)
+                {
+                    _logger.LogWarning(
+                        "Password validation failed for user {UserId}. Error: {Error}",
+                        request.Id,
+                        passwordResult.GetErrorOrThrow().Message
+                    );
+                    return ApiResult<bool>.Error(passwordResult.GetErrorOrThrow().Message, 400);
+                }
 
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                var passwordUpdateResult = user.UpdatePassword(passwordHash);
+
+                if (passwordUpdateResult.IsFailure)
+                {
+                    _logger.LogWarning(
+                        "Failed to update password for user {UserId}",
+                        request.Id
+                    );
+                    return ApiResult<bool>.Error(
+                        passwordUpdateResult.GetErrorOrThrow().Message,
+                        400
+                    );
+                }
+
+                _logger.LogInformation("Password updated for user {UserId}", user.Id);
+            }
+
+            Update(user);
             await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
-            _logger.LogInformation("User {UserId} updated successfully", userEntity.Id);
+            _logger.LogInformation("User {UserId} updated successfully", user.Id);
 
             return ApiResult<bool>.Success(true, "User updated successfully", 200);
         }
         catch (DbUpdateException dbEx)
         {
-            _logger.LogError(dbEx, "Database error updating user {UserId}", user.Id);
+            _logger.LogError(dbEx, "Database error updating user {UserId}", request.Id);
             return ApiResult<bool>.Error("Error saving changes to database", 500);
         }
         catch (InvalidOperationException opEx)
         {
-            _logger.LogError(opEx, "Operation error editing user {UserId}", user.Id);
+            _logger.LogError(opEx, "Operation error editing user {UserId}", request.Id);
             return ApiResult<bool>.Error("Internal server error", 500);
         }
     }
