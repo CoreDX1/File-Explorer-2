@@ -1,235 +1,160 @@
-<h1 align="center">File-Explorer 📂</h1>
+<h1 align="center">File-Explorer</h1>
 
 <p align="center">
-  <strong>Un explorador de archivos simple y potente, desarrollado para ofrecer una gestión de archivos y directorios intuitiva y eficiente.</strong>
+  <strong>Plataforma integral para la gestión, administración y control seguro de archivos y directorios corporativos.</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Frontend-Angular-red" alt="Frontend Angular">
-  <img src="https://img.shields.io/badge/Backend-.NET%20Core-blueviolet" alt="Backend .NET Core">
+  <img src="https://img.shields.io/badge/Frontend-Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white" alt="Frontend Angular">
+  <img src="https://img.shields.io/badge/Backend-.NET_Core-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Backend .NET Core">
 </p>
-
-## Tabla de Contenidos
-
-*   [Descripción General](#descripción-general)
-*   [Características Principales](#características-principales)
-*   [Vistazo a la Aplicación](#vistazo-a-la-aplicación)
-*   [Tecnologías Utilizadas](#tecnologías-utilizadas)
-*   [Arquitectura del Proyecto](#arquitectura-del-proyecto)
-*   [Patrones de Diseño Utilizados](#patrones-de-diseño-utilizados)
-*   [Prerrequisitos](#prerrequisitos)
-*   [Instalación](#instalación)
-*   [Uso](#uso)
-*   [Roadmap (Funcionalidades Futuras)](#roadmap-funcionalidades-futuras)
-*   [Contribuciones](#contribuciones)
-*   [Licencia](#licencia)
-*   [Contacto](#contacto)
-
-## Descripción General
-
-File-Explorer es una aplicación de escritorio moderna que permite a los usuarios navegar por el sistema de archivos, visualizar el contenido de los directorios y realizar operaciones esenciales con archivos y carpetas. La interfaz de usuario está construida con Angular, proporcionando una experiencia fluida y reactiva, mientras que la lógica del backend se maneja con .NET Core, asegurando robustez y rendimiento.
-
-## Características Principales
-
-*   ✅ **Navegación Intuitiva:** Explore su sistema de archivos con una estructura de árbol de directorios clara y fácil de usar.
-*   ✅ **Visualización Detallada:** Vea el contenido de las carpetas, incluyendo detalles de archivos y previsualizaciones (si aplica).
-*   ⏳ **Operaciones Básicas de Archivos:**
-    *   Copiar archivos/carpetas
-    *   Pegar archivos/carpetas
-    *   Renombrar archivos/carpetas
-    *   Eliminar archivos/carpetas
-    *   Crear nuevas carpetas
-    *   Búsqueda de archivos
-    *   *(Más características se añadirán progresivamente)*
-
-## Vistazo a la Aplicación
-
-<p align="center">
-  <img src="image/UIV2.png" alt="UI File-Explorer" width="60%">
-  <br>
-  <em>Navegación de carpetas en File-Explorer.</em>
-</p>
-
-<p align="center">
-  <img src="image/Swagger.png" alt="Swagger API" width="60%">
-  <br>
-  <em>Documentación de la API con Swagger.</em>
-</p>
-
-## Tecnologías Utilizadas
-
-*   **Frontend:** [Angular](https://angular.io/)
-*   **Backend:** [.NET Core](https://dotnet.microsoft.com/)
-
-## Arquitectura del Proyecto
-
-El proyecto sigue una arquitectura por capas (Layered Architecture), comúnmente asociada con los principios de la Arquitectura Limpia (Clean Architecture). Esta separación de responsabilidades se evidencia en la estructura del proyecto con las siguientes capas principales:
-
-*   **Web (Capa de Presentación):** Responsable de manejar las solicitudes HTTP, la interfaz de usuario (frontend con Angular) y la API (backend con .NET Core).
-*   **Application (Capa de Aplicación):** Contiene la lógica de negocio y los casos de uso de la aplicación. Orquesta las interacciones entre la capa de presentación y la capa de infraestructura.
-*   **Infrastructure (Capa de Infraestructura):** Se encarga de las implementaciones concretas de las abstracciones definidas en la capa de aplicación, como el acceso a datos, servicios externos, etc.
-*   **Domain (Capa de Dominio):** Contiene las entidades y las reglas de negocio de la aplicación.
-
-## Patrones de Diseño Utilizados
-
-### Patrones Arquitectónicos
-
-#### **Clean Architecture (Arquitectura Limpia)**
-Separación en 4 capas independientes con dependencias unidireccionales hacia el dominio:
-- **Domain:** Entidades, interfaces y reglas de negocio
-- **Application:** Casos de uso, DTOs, servicios y validaciones
-- **Infrastructure:** Implementación de repositorios, acceso a datos (EF Core)
-- **Web:** Controllers, middleware, configuración de API
-
-#### **Layered Architecture (Arquitectura por Capas)**
-Organización jerárquica donde cada capa solo conoce la capa inmediatamente inferior.
-
-### Patrones de Diseño Implementados
-
-#### **1. Repository Pattern**
-Abstrae el acceso a datos y proporciona una interfaz uniforme para operaciones CRUD.
-```csharp
-// Infrastructure/Repositories/Repository.cs
-public interface IRepositoryAsync<T> where T : Entity
-{
-    Task<T?> GetByIdAsync(int id);
-    IQueryable<T> Queryable();
-}
-```
-
-#### **2. Unit of Work Pattern**
-Coordina transacciones y cambios en múltiples repositorios.
-```csharp
-// Infrastructure/UnitOfWork.cs
-public interface IUnitOfWorkAsync
-{
-    Task<int> SaveChangesAsync();
-}
-```
-
-#### **3. Dependency Injection (DI)**
-Inyección de dependencias en toda la aplicación para desacoplamiento y testabilidad.
-```csharp
-// Program.cs
-services.AddScoped<IUserServices, UserServices>();
-```
-
-#### **4. Maybe Monad (Option Pattern)**
-Manejo explícito de valores opcionales sin usar `null`.
-```csharp
-// Domain/Monads/MaybeT.cs
-public async Task<Maybe<User>> FindByEmailAsync(string email)
-{
-    var user = await Queryable().FirstOrDefaultAsync(u => u.Email == email);
-    return Maybe.From(user);
-}
-```
-
-#### **5. Result Pattern**
-Encapsula el resultado de operaciones que pueden fallar, propagando errores de forma funcional.
-```csharp
-// Domain/Monads/Result/Result.cs
-public Result<Unit> ValidateEmail(string email)
-{
-    if (string.IsNullOrWhiteSpace(email))
-        return Result.Failure<Unit>("Invalid email");
-    return Result.Unit;
-}
-```
-
-#### **6. Railway-Oriented Programming**
-Encadenamiento de operaciones con manejo automático de errores usando `Bind` y `Map`.
-```csharp
-var result = ValidateEmail(email)
-    .Bind(() => ValidatePassword(password))
-    .Map(_ => new CreateUserRequest(email, password));
-```
-
-#### **7. Factory Method Pattern**
-Creación de instancias a través de métodos estáticos.
-```csharp
-// Domain/Monads/Maybe.cs
-public static Maybe<T> From<T>(T? value) => new(value);
-public static Maybe<T> Some<T>(T value) => new(value);
-```
-
-#### **8. Service Layer Pattern**
-Encapsula la lógica de negocio en servicios reutilizables.
-```csharp
-// Application/Services/UserServices.cs
-public class UserServices : Service<User>, IUserServices
-```
-
-#### **9. DTO Pattern (Data Transfer Object)**
-Objetos para transferir datos entre capas sin exponer entidades del dominio.
-```csharp
-// Application/DTOs/Request/CreateUserRequest.cs
-// Application/DTOs/Response/LoginResponse.cs
-```
-
-#### **10. Mapper Pattern (con Mapster)**
-Transformación automática entre entidades y DTOs.
-```csharp
-var dto = users.Adapt<List<GetUserResponse>>();
-```
-
-#### **11. Fluent Validation Pattern**
-Validaciones declarativas y reutilizables.
-```csharp
-// Application/Validation/CreateUserRequestValidator.cs
-public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
-```
-
-#### **12. Middleware Pattern**
-Procesamiento de requests HTTP en cadena.
-```csharp
-// Web/Middleware/RequestIdMiddleware.cs
-app.UseMiddleware<RequestIdMiddleware>();
-```
-
-#### **13. API Result Pattern**
-Respuestas HTTP estandarizadas con metadata.
-```csharp
-return ApiResult<LoginResponse>.Success(response, "Login successful", 200);
-return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
-```
-
-#### **14. Generic Repository Pattern**
-Repositorio genérico para operaciones comunes en todas las entidades.
-```csharp
-public class Repository<T> : IRepositoryAsync<T> where T : Entity
-```
-
-#### **15. Options Pattern**
-Configuración tipada y validada.
-```csharp
-// Application/Configuration/JwtSettings.cs
-private readonly LockoutOptions _lockoutOptions = new();
-```
-
-### Patrones Funcionales
-
-- **Immutability:** Uso de `readonly struct` en `Maybe<T>` y `Result<T>`
-- **Pure Functions:** Métodos sin efectos secundarios en validaciones
-- **Higher-Order Functions:** `Map`, `Bind`, `Match` en monads
-- **Function Composition:** Encadenamiento de operaciones con `Bind`
-
-### Principios SOLID Aplicados
-
-- **S** - Single Responsibility: Cada servicio tiene una responsabilidad única
-- **O** - Open/Closed: Extensible mediante interfaces
-- **L** - Liskov Substitution: Implementaciones intercambiables
-- **I** - Interface Segregation: Interfaces específicas por funcionalidad
-- **D** - Dependency Inversion: Dependencias hacia abstracciones
 
 ---
 
-## Roadmap (Funcionalidades Futuras)
+## Resumen Ejecutivo
 
-- [ ] Token Refresh (JWT)
-- [x] Bloqueo de cuenta por intentos fallidos
-- [ ] Autenticación con Google OAuth
-- [ ] Recuperación de contraseña
-- [ ] Búsqueda avanzada de archivos
-- [ ] Sistema de permisos y roles
-- [ ] Compartir archivos con enlaces 
+**File-Explorer** es una solución web de alto rendimiento diseñada para centralizar y optimizar la gestión de activos digitales. Construida sobre una arquitectura robusta utilizando **Angular** para la interfaz de usuario y **.NET Core** para los servicios backend, la plataforma garantiza escalabilidad, seguridad y una experiencia de usuario fluida al navegar e interactuar con sistemas de archivos complejos.
+
+## Capacidades Principales
+
+- **Gestión Documental Avanzada:** Navegación jerárquica, creación, renombrado y eliminación estructurada de archivos y directorios.
+- **Operaciones de Transferencia:** Soporte transaccional para operaciones de copiado y reubicación de activos.
+- **Motor de Búsqueda:** Indexación y localización rápida de documentos dentro del ecosistema.
+- **Auditoría y Trazabilidad:** Historial de operaciones y seguimiento de modificaciones.
+- **Administración Centralizada:** Panel de control para la gestión de usuarios, cuotas de almacenamiento y métricas del sistema.
+
+---
+
+## Módulos del Sistema
+
+A continuación se detalla la interfaz gráfica de la plataforma, dividida por sus módulos funcionales principales.
+
+### Panel de Control y Navegación Principal
+
+El área de trabajo central diseñada para maximizar la productividad y ofrecer una visualización clara de la estructura de directorios.
+
+<p align="center">
+  <img src="image/Explorer.png" alt="Explorador Principal" width="80%" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+</p>
+
+### Identidad y Control de Acceso
+
+Gestión de credenciales, autenticación segura y administración de perfiles de usuario.
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="50%"><strong>Portal de Acceso</strong><br><br><img src="image/Login.png" width="350"></td>
+    <td align="center" width="50%"><strong>Perfil de Usuario</strong><br><br><img src="image/Profile.png" width="350"></td>
+  </tr>
+</table>
+
+### Gestión Operativa y Auditoría
+
+Herramientas dedicadas a los administradores del sistema para el monitoreo, gestión de usuarios y generación de informes operativos.
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="50%"><strong>Dashboard Administrativo</strong><br><br><img src="image/Admin.png" width="350"></td>
+    <td align="center" width="50%"><strong>Gestor de Administradores</strong><br><br><img src="image/AdminManager.png" width="350"></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><strong>Reportes Analíticos</strong><br><br><img src="image/AdminReports.png" width="350"></td>
+    <td align="center" width="50%"><strong>Gestión de Grupos y Permisos</strong><br><br><img src="image/GroupManage.png" width="350"></td>
+  </tr>
+</table>
+
+### Gestión de Activos y Colaboración
+
+Interfaces orientadas a la manipulación directa de datos, políticas de retención y opciones de uso compartido.
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="50%"><strong>Estructura de Carpetas</strong><br><br><img src="image/Folder.png" width="350"></td>
+    <td align="center" width="50%"><strong>Centro de Uso Compartido</strong><br><br><img src="image/FileSharing.png" width="350"></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><strong>Búsqueda Especializada</strong><br><br><img src="image/Search.png" width="350"></td>
+    <td align="center" width="50%"><strong>Retención (Papelera)</strong><br><br><img src="image/Trash.png" width="350"></td>
+  </tr>
+</table>
+
+### Configuración del Sistema y Mantenimiento
+
+Ajustes globales de la plataforma, asignación de recursos, facturación y políticas de seguridad.
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="50%"><strong>Configuración General</strong><br><br><img src="image/Settings.png" width="350"></td>
+    <td align="center" width="50%"><strong>Métricas de Almacenamiento</strong><br><br><img src="image/Storage.png" width="350"></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><strong>Facturación y Licenciamiento</strong><br><br><img src="image/Billing.png" width="350"></td>
+    <td align="center" width="50%"><strong>Políticas de Seguridad</strong><br><br><img src="image/Security.png" width="350"></td>
+  </tr>
+</table>
+
+### Notificaciones y Soporte Técnico
+
+Módulos transversales para mantener al usuario informado e integrado con la documentación de las API.
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="33%"><strong>Notificaciones</strong><br><br><img src="image/Notifications.png" width="250"></td>
+    <td align="center" width="33%"><strong>Centro de Ayuda</strong><br><br><img src="image/Help.png" width="250"></td>
+    <td align="center" width="33%"><strong>Documentación API (Swagger)</strong><br><br><img src="image/Swagger.png" width="250"></td>
+  </tr>
+</table>
+
+---
+
+## Arquitectura Técnica
+
+El proyecto ha sido desarrollado siguiendo estrictamente los principios de **Clean Architecture**, asegurando un bajo acoplamiento y alta cohesión mediante la separación en 4 capas fundamentales:
+
+| Capa               | Responsabilidad Técnica                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Domain**         | Contiene las entidades core del negocio, interfaces de dominio y excepciones de negocio puras. No posee dependencias externas.      |
+| **Application**    | Implementa los casos de uso del sistema. Contiene la lógica orquestadora, servicios de aplicación, DTOs y validaciones.             |
+| **Infrastructure** | Implementa el acceso a datos (Entity Framework Core), repositorios, servicios externos y manejo del sistema de archivos físico.     |
+| **Web**            | Capa de presentación (Frontend en Angular) y controladores API REST (Backend). Maneja el ruteo HTTP y la inyección de dependencias. |
+
+## Estándares y Patrones de Diseño
+
+El código base respeta los principios **SOLID** y aplica estándares de la industria para garantizar su escalabilidad y mantenibilidad a largo plazo.
+
+**Arquitectónicos:**
+
+- Clean Architecture & Layered Architecture.
+
+**De Diseño Estructural y Creacional:**
+
+- Repository & Unit of Work (Abstracción de persistencia y transaccionalidad).
+- Dependency Injection (Inversión de control).
+- Service Layer (Encapsulamiento de lógica).
+- Factory Method & Options Pattern (Configuraciones tipadas y creación segura de objetos).
+
+**Implementaciones Técnicas:**
+
+- **Data Transfer Objects (DTO):** Aislamiento del modelo de dominio.
+- **Mapping (Mapster):** Transformación eficiente entre Entidades y DTOs.
+- **Fluent Validation:** Validaciones de entrada de datos declarativas y separadas de la lógica de negocio.
+- **Pipeline Middleware:** Procesamiento global de excepciones y solicitudes HTTP.
+
+**Patrones Funcionales:**
+
+- **Result Pattern:** Manejo predecible de respuestas y errores, evitando el uso excesivo de excepciones.
+- **Maybe Monad & Railway-Oriented Programming:** Flujos de ejecución seguros contra valores nulos y encadenamiento de operaciones lógicas.
+
+---
+
+## Plan de Desarrollo (Roadmap)
+
+El desarrollo del producto es iterativo. Las siguientes características conforman la hoja de ruta para las próximas versiones:
+
+- [x] Implementación de políticas de bloqueo de cuenta por intentos de acceso fallidos.
+- [ ] Integración de mecanismo Token Refresh para sesiones JWT ininterrumpidas.
+- [ ] Autenticación federada mediante Google OAuth (SSO).
+- [ ] Flujo seguro de recuperación y restablecimiento de contraseñas.
+- [ ] Motor de búsqueda avanzada con filtros por metadatos (fecha, tamaño, tipo).
+- [ ] Implementación de un modelo de control de acceso basado en roles (RBAC) granular.
+- [ ] Generación de enlaces públicos con expiración para el uso compartido de activos externos.
