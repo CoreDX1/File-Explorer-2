@@ -1,5 +1,7 @@
+using System.Threading.RateLimiting;
 using Application;
 using Application.Configuration;
+using Domain.Entities;
 using Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -27,6 +29,31 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 var configuration = builder.Configuration;
+
+builder.Services.Configure<LockoutOptions>(builder.Configuration.GetSection("LockoutOptions"));
+
+// Rate Limiter
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("fixed", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? "anonymous",
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: httpContext.Request.Form["email"].ToString() ?? "unknown",
+            factory: partition => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(5)
+            }));
+});
+
 
 // CORS policy
 var AllowOrigins = "AllowOrigins";
@@ -138,6 +165,7 @@ app.UseAuthorization();
 
 app.UseCors(AllowOrigins); // Asegúrate de llamarlo antes de MapControllers
 
+app.UseRateLimiter();
 app.MapControllers();
 
 await app.RunAsync().ConfigureAwait(false);

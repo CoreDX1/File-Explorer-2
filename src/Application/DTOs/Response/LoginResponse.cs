@@ -4,6 +4,7 @@ public sealed record LoginResponse(
     string Email,
     string FirstName,
     string LastName,
-    string Phone,
-    string Token
+    string? Phone,
+    string AccessToken,
+    string? RefreshToken
 );

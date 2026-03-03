@@ -1,126 +1,52 @@
 using System.Data;
+using Infrastructure.Data;
 using Infrastructure.Interfaces;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using TrackableEntities.Common.Core;
 
 namespace Infrastructure;
 
 public class UnitOfWork : IUnitOfWorkAsync, IDisposable
 {
     private readonly DbContext _context;
-    private IDbContextTransaction? Transaction;
-    private Dictionary<string, dynamic> Repositories;
+    private IDbContextTransaction? _transaction;
+    private IRefreshTokenRepository? _refreshTokenRepository;
     private bool _disposed;
 
     public UnitOfWork(DbContext context)
     {
-        _context = context;
-        Repositories = new Dictionary<string, dynamic>();
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public int? CommandTimeout { get; set; }
+    public IRefreshTokenRepository RefreshTokenRepository =>
+        _refreshTokenRepository ??= new RefreshTokenRepository((FileExplorerDbContext)_context);
 
-    public virtual IRepository<TEntity> Repository<TEntity>()
-        where TEntity : class, ITrackable
+    public int SaveChanges() => _context.SaveChanges();
+
+    public Task<int> SaveChangesAsync() => _context.SaveChangesAsync();
+
+    public Task<int> SaveChangesAsync(CancellationToken cancellationToken) =>
+        _context.SaveChangesAsync(cancellationToken);
+
+    public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified) =>
+        _transaction = _context.Database.BeginTransaction(isolationLevel);
+
+    public bool Commit()
     {
-        return RepositoryAsync<TEntity>();
-    }
-
-    public virtual int SaveChanges() => _context.SaveChanges();
-
-    public Task<int> SaveChangesAsync()
-    {
-        return _context.SaveChangesAsync();
-    }
-
-    public virtual Task<int> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        return _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public virtual IRepositoryAsync<TEntity> RepositoryAsync<TEntity>()
-        where TEntity : class, ITrackable
-    {
-        if (Repositories == null)
-        {
-            Repositories = new Dictionary<string, dynamic>();
-        }
-
-        var type = typeof(TEntity).Name;
-
-        if (Repositories.ContainsKey(type))
-        {
-            return (IRepositoryAsync<TEntity>)Repositories[type];
-        }
-
-        var repositoryType = typeof(Repository<>);
-        var instance = Activator.CreateInstance(
-            repositoryType.MakeGenericType(typeof(TEntity)),
-            _context
-        );
-
-        if (instance != null)
-        {
-            Repositories.Add(type, instance);
-            return (IRepositoryAsync<TEntity>)instance;
-        }
-
-        throw new InvalidOperationException($"Could not create repository for {type}");
-    }
-
-    public virtual int ExecuteSqlCommand(string sql, params object[] parameters)
-    {
-        return _context.Database.ExecuteSqlRaw(sql, parameters);
-    }
-
-    public virtual async Task<int> ExecuteSqlCommandAsync(string sql, params object[] parameters)
-    {
-        return await _context.Database.ExecuteSqlRawAsync(sql, parameters).ConfigureAwait(false);
-    }
-
-    public virtual async Task<int> ExecuteSqlCommandAsync(
-        string sql,
-        CancellationToken cancellationToken,
-        params object[] parameters
-    )
-    {
-        return await _context.Database.ExecuteSqlRawAsync(sql, cancellationToken, parameters).ConfigureAwait(false);
-    }
-
-    public virtual void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
-    {
-        Transaction = _context.Database.BeginTransaction(isolationLevel);
-    }
-
-    public virtual bool Commit()
-    {
-        Transaction?.Commit();
+        _transaction?.Commit();
         return true;
     }
 
-    public virtual void Rollback()
-    {
-        Transaction?.Rollback();
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                Transaction?.Dispose();
-                _context?.Dispose();
-            }
-        }
-        _disposed = true;
-    }
+    public void Rollback() => _transaction?.Rollback();
 
     public void Dispose()
     {
-        Dispose(true);
+        if (_disposed)
+            return;
+        _transaction?.Dispose();
+        _context?.Dispose();
+        _disposed = true;
         GC.SuppressFinalize(this);
     }
 }

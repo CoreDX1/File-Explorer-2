@@ -12,6 +12,8 @@ using Infrastructure.Interfaces;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using TrackableEntities.Common.Core;
 using static Domain.Monads.Result.ResultExtensions;
 
 namespace Application.Services;
@@ -22,14 +24,15 @@ public class UserServices : Service<User>, IUserServices
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWorkAsync _unitOfwork;
     private readonly IValidator<CreateUserRequest> _validator;
-    private readonly LockoutOptions _lockoutOptions = new();
+    private readonly IOptions<LockoutOptions> _lockoutOptions;
 
     public UserServices(
         IRepositoryAsync<User> repository,
         IJwtTokenService jwtTokenService,
         IUnitOfWorkAsync unitOfwork,
         IValidator<CreateUserRequest> validator,
-        ILogger<UserServices> logger
+        ILogger<UserServices> logger,
+        IOptions<LockoutOptions> lockoutOptions
     )
         : base(repository)
     {
@@ -37,6 +40,7 @@ public class UserServices : Service<User>, IUserServices
         _unitOfwork = unitOfwork;
         _validator = validator;
         _logger = logger;
+        _lockoutOptions = lockoutOptions;
     }
 
     public async Task<ApiResult<UserResponse>> FindByIdAsync(int id)
@@ -118,9 +122,9 @@ public class UserServices : Service<User>, IUserServices
         {
             user.FailedLoginAttemts++;
 
-            if (user.FailedLoginAttemts >= _lockoutOptions.MaxFailedAccessAttempts)
+            if (user.FailedLoginAttemts >= _lockoutOptions.Value.MaxFailedAccessAttempts)
             {
-                user.LockoutEnd = DateTime.UtcNow.Add(_lockoutOptions.DefaultLockoutTimeSpan);
+                user.LockoutEnd = DateTime.UtcNow.Add(_lockoutOptions.Value.DefaultLockoutTimeSpan);
                 _logger.LogWarning(
                     "User {Email} locked out until {LockoutEnd} after {Attempts} failed attempts",
                     email,
@@ -133,14 +137,14 @@ public class UserServices : Service<User>, IUserServices
 
                 // Usuario ya quedó bloqueado: informamos lockout con intento final
                 return ApiResult<LoginResponse>.Error(
-                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}. Try again later.",
+                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.Value.MaxFailedAccessAttempts}. Try again later.",
                     403
                 );
             }
             else
             {
                 int remainingAttempts =
-                    _lockoutOptions.MaxFailedAccessAttempts - user.FailedLoginAttemts;
+                    _lockoutOptions.Value.MaxFailedAccessAttempts - user.FailedLoginAttemts;
 
                 _logger.LogWarning(
                     "Authentication failed: Invalid password for {Email}. Failed attempts: {Attempts}, Remaining before lockout: {Remaining}",
@@ -154,7 +158,7 @@ public class UserServices : Service<User>, IUserServices
 
                 // Message includes current attempt and total allowed attempts
                 return ApiResult<LoginResponse>.Error(
-                    $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.MaxFailedAccessAttempts}.",
+                    $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.Value.MaxFailedAccessAttempts}.",
                     401
                 );
             }
@@ -165,13 +169,36 @@ public class UserServices : Service<User>, IUserServices
         user.LockoutEnd = null;
         user.LastLoginAt = DateTime.UtcNow;
 
-        string token = _jwtTokenService.GenerateToken(
+        // 1. Generar Access Token
+        string accessToken = _jwtTokenService.GenerateToken(
             user.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
             user.Email,
             "User"
         );
 
+        // 2. Generar Refresh Token
+        string refreshTokenValue = GenerateSecureRefreshToken();
+
+        // 3. Crear entidad Refresh Token para guardar en DB
+
+        var newRefreshToken = new RefreshToken
+        {
+            UserId = user.Id,
+            Token = refreshTokenValue,
+            Expire = DateTime.UtcNow.AddDays(7), // Duración larga (ej. 7 días)
+            Created = DateTime.UtcNow,
+            Revoked = null,
+            ReasonRevoked = null,
+            ReplacedByToken = null,
+            TrackingState = TrackingState.Added,
+        };
+
+        _unitOfwork.RefreshTokenRepository.Insert(newRefreshToken);
+
+        user.TrackingState = TrackingState.Modified;
+
         Update(user);
+
         await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
         LoginResponse userMapper = new(
@@ -179,7 +206,8 @@ public class UserServices : Service<User>, IUserServices
             user.FirstName,
             user.LastName,
             user.Phone,
-            token
+            accessToken,
+            refreshTokenValue
         );
 
         _logger.LogInformation(
@@ -254,18 +282,34 @@ public class UserServices : Service<User>, IUserServices
             await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
             // 6. Generate JWT token for automatic login
-            string token = _jwtTokenService.GenerateToken(
+            string accessToken = _jwtTokenService.GenerateToken(
                 userToCreate.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 userToCreate.Email,
                 "User"
             );
+
+            // 7. Generate Refresh Token
+            string refreshTokenValue = GenerateSecureRefreshToken();
+
+            var newRefreshToken = new RefreshToken
+            {
+                UserId = userToCreate.Id,
+                Token = refreshTokenValue,
+                Expire = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow,
+                TrackingState = TrackingState.Added,
+            };
+
+            _unitOfwork.RefreshTokenRepository.Insert(newRefreshToken);
+            await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
 
             LoginResponse response = new(
                 userToCreate.Email,
                 userToCreate.FirstName,
                 userToCreate.LastName,
                 userToCreate.Phone,
-                token
+                accessToken,
+                refreshTokenValue
             );
 
             _logger.LogInformation(
@@ -289,9 +333,142 @@ public class UserServices : Service<User>, IUserServices
     }
 
     // TODO: Implementar la lógica para refrescar la autenticación
-    public Task<ApiResult<object>> RefreshAuthenticationAsync(string refreshToken)
+    public async Task<ApiResult<LoginResponse>> RefreshAuthenticationAsync(
+        string refreshToken,
+        int userId
+    )
     {
-        throw new NotImplementedException();
+        _logger.LogInformation(
+            "Refresh authentication attempt for UserId: {UserId} with RefreshToken: {RefreshToken}",
+            userId,
+            refreshToken
+        );
+
+        var maybeCurrenToken = await FindRefreshTokenActiveAsync(userId, refreshToken);
+        if (maybeCurrenToken.IsNone)
+        {
+            _logger.LogWarning(
+                "Refresh failed: Invalid or inactive token for UserId {UserId}",
+                userId
+            );
+
+            return ApiResult<LoginResponse>.Error("Invalid or expired refresh token", 401);
+        }
+
+        RefreshToken currentToken = maybeCurrenToken.GetValueOrThrow();
+        if (currentToken.IsActive)
+        {
+            // Caso especial: ¿Fue revocado por rotación previa? (Posible ataque de replay)
+            if (currentToken.IsRevoked && !string.IsNullOrEmpty(currentToken.ReplacedByToken))
+            {
+                _logger.LogError(
+                    "SECURITY ALERT: Reuse of revoked refresh token detected for UserId {UserId}. Token ID: {TokenId}",
+                    userId,
+                    currentToken.Id
+                );
+                // Opcional: Aquí podrías revocar TODA la familia de tokens de este usuario por seguridad.
+            }
+
+            return ApiResult<LoginResponse>.Error("Refresh token has been revoked or expired", 403);
+        }
+
+        try
+        {
+            // --- PASO A: Revocar el token actual ---
+            var newRefreshTokenValue = GenerateSecureRefreshToken();
+
+            currentToken.Revoked = DateTime.UtcNow;
+            currentToken.ReasonRevoked = "Rotated";
+            currentToken.ReplacedByToken = newRefreshTokenValue;
+            currentToken.TrackingState = TrackingState.Modified;
+            _unitOfwork.RefreshTokenRepository.ApplyChanges(currentToken);
+
+            // --- PASO B: Crear el nuevo Refresh Token ---
+            var newRefreshTokenEntity = new RefreshToken
+            {
+                UserId = userId,
+                Token = newRefreshTokenValue,
+                Expire = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow,
+                Revoked = null,
+                TrackingState = TrackingState.Added,
+            };
+
+            _unitOfwork.RefreshTokenRepository.Insert(newRefreshTokenEntity);
+
+            // PASO C: Generar nuevo Access Token ---
+            User? user = currentToken.User;
+            if (user == null)
+            {
+                user = await FindAsync(userId);
+                if (user == null)
+                    throw new Exception("Usuario no encontrado durante refresh");
+            }
+
+            string newAccessToken = _jwtTokenService.GenerateToken(
+                user.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                user.Email,
+                "User"
+            );
+
+            // --- PASO D: Persistir cambios ---
+            await _unitOfwork.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Token refreshed successfully for UserId {UserId}. New Token Expires: {Expire}",
+                userId,
+                newRefreshTokenEntity.Expire
+            );
+
+            // Mapear respuesta (igual que en Login)
+            var response = new LoginResponse(
+                user.Email,
+                user.FirstName,
+                user.LastName,
+                user.Phone,
+                newAccessToken,
+                newRefreshTokenValue // Asegúrate que LoginResponse tenga esta propiedad
+            );
+
+            return ApiResult<LoginResponse>.Success(response, "Token refreshed successfully", 200);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error occurred while refreshing token for UserId {UserId}",
+                userId
+            );
+            // El 'await using' de la transacción hará Rollback automático
+            return ApiResult<LoginResponse>.Error(
+                "Internal server error during token refresh",
+                500
+            );
+        }
+    }
+
+    public async Task<Maybe<RefreshToken>> FindRefreshTokenActiveAsync(
+        int userId,
+        string tokenValue
+    )
+    {
+        var token = await _unitOfwork
+            .RefreshTokenRepository.Queryable()
+            .Where(rt => rt.UserId == userId && rt.Token == tokenValue && rt.IsActive)
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        return token != null ? Maybe.From(token) : Maybe.None<RefreshToken>();
+    }
+
+    // Generador criptografico seguro
+
+    public string GenerateSecureRefreshToken()
+    {
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var bytes = new byte[64];
+        rng.GetBytes(bytes);
+        return Convert.ToBase64String(bytes);
     }
 
     // TODO: Implementar la lógica para revocar la autenticación

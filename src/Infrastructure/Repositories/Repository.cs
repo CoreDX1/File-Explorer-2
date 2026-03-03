@@ -9,7 +9,7 @@ public class Repository<TEntity> : IRepository<TEntity>, IRepositoryAsync<TEntit
     where TEntity : Entity
 {
     private readonly FileExplorerDbContext _context;
-    private readonly DbSet<TEntity> _dbSet;
+    public readonly DbSet<TEntity> _dbSet;
 
     public Repository(FileExplorerDbContext context)
     {

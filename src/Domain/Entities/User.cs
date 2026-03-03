@@ -35,7 +35,6 @@ public class User : Entity
 
 public class LockoutOptions
 {
-    public bool AllowebForNewUser { get; set; } = true;
-    public int MaxFailedAccessAttempts { get; set; } = 5;
-    public TimeSpan DefaultLockoutTimeSpan { get; set; } = TimeSpan.FromMinutes(5.0);
+    public int MaxFailedAccessAttempts { get; set; }
+    public TimeSpan DefaultLockoutTimeSpan { get; set; }
 }

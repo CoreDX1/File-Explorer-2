@@ -1,15 +1,12 @@
 using System.Data;
-using TrackableEntities.Common.Core;
+using Infrastructure.Interfaces;
 
 namespace Infrastructure.Interfaces;
 
 public interface IUnitOfWork
 {
+    IRefreshTokenRepository RefreshTokenRepository { get; }
     int SaveChanges();
-    int ExecuteSqlCommand(string sql, params object[] parameters);
-    IRepository<TEntity> Repository<TEntity>()
-        where TEntity : class, ITrackable;
-    int? CommandTimeout { get; set; }
     void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     bool Commit();
     void Rollback();

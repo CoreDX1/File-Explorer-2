@@ -1,8 +1,7 @@
 using Application.DTOs.Request;
-using Application.DTOs.Response;
 using Application.Interfaces;
-using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Web.Controllers;
 
@@ -20,10 +19,13 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var result = await _userServices.AuthenticateUserAsync(request.Email, request.Password).ConfigureAwait(false);
+        var result = await _userServices
+            .AuthenticateUserAsync(request.Email, request.Password)
+            .ConfigureAwait(false);
 
         if (result.Metadata is null)
         {
@@ -66,7 +68,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var result = await _userServices.RefreshAuthenticationAsync(request.RefreshToken).ConfigureAwait(false);
+        var result = await _userServices.RefreshAuthenticationAsync(
+            request.RefreshToken,
+            request.Id
+        );
 
         if (result.Metadata?.StatusCode != 200)
             return Unauthorized(new { message = "Invalid refresh token" });
@@ -86,7 +91,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var result = await _userServices.AuthenticateWithGoogleAsync(request.IdToken).ConfigureAwait(false);
+        var result = await _userServices
+            .AuthenticateWithGoogleAsync(request.IdToken)
+            .ConfigureAwait(false);
 
         if (result.Metadata?.StatusCode != 200)
             return BadRequest(new { message = result.Metadata?.Message });
@@ -106,7 +113,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var result = await _userServices.ResetPasswordAsync(request.Token, request.NewPassword).ConfigureAwait(false);
+        var result = await _userServices
+            .ResetPasswordAsync(request.Token, request.NewPassword)
+            .ConfigureAwait(false);
 
         if (result.Metadata?.StatusCode != 200)
             return BadRequest(result);
@@ -129,7 +138,7 @@ public class AuthController : ControllerBase
     }
 }
 
-public record RefreshTokenRequest(string RefreshToken);
+public record RefreshTokenRequest(string RefreshToken, int Id);
 
 public record LogoutRequest(string RefreshToken);
 
