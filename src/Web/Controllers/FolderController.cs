@@ -31,7 +31,11 @@ public class FolderController : ControllerBase
             return NotFound(new { message = result.Errors });
         }
 
-        _logger.LogInformation("Retrieved {Count} folders for path: {Path}", result.Value.Count, path);
+        _logger.LogInformation(
+            "Retrieved {Count} folders for path: {Path}",
+            result.Value.Count,
+            path
+        );
         return Ok(result.Value);
     }
 
@@ -48,7 +52,11 @@ public class FolderController : ControllerBase
             return NotFound(new { message = result.Errors });
         }
 
-        _logger.LogInformation("Retrieved {Count} files for path: {Path}", result.Value.Count, path);
+        _logger.LogInformation(
+            "Retrieved {Count} files for path: {Path}",
+            result.Value.Count,
+            path
+        );
         return Ok(result.Value);
     }
 

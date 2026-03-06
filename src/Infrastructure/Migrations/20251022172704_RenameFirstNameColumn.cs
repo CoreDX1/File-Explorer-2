@@ -10,19 +10,13 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "FirtName",
-                table: "Users",
-                newName: "FirstName");
+            migrationBuilder.RenameColumn(name: "FirtName", table: "Users", newName: "FirstName");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "FirstName",
-                table: "Users",
-                newName: "FirtName");
+            migrationBuilder.RenameColumn(name: "FirstName", table: "Users", newName: "FirtName");
         }
     }
 }

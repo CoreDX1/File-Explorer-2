@@ -15,25 +15,23 @@ namespace Infrastructure.Migrations
                 name: "PasswordResetToken",
                 table: "Users",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "PasswordResetTokenExpiry",
                 table: "Users",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "PasswordResetToken",
-                table: "Users");
+            migrationBuilder.DropColumn(name: "PasswordResetToken", table: "Users");
 
-            migrationBuilder.DropColumn(
-                name: "PasswordResetTokenExpiry",
-                table: "Users");
+            migrationBuilder.DropColumn(name: "PasswordResetTokenExpiry", table: "Users");
         }
     }
 }

@@ -10,9 +10,7 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "FullName",
-                table: "Users");
+            migrationBuilder.DropColumn(name: "FullName", table: "Users");
         }
 
         /// <inheritdoc />
@@ -24,7 +22,8 @@ namespace Infrastructure.Migrations
                 type: "TEXT",
                 maxLength: 100,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: ""
+            );
         }
     }
 }

@@ -1,6 +1,6 @@
 using Application.Interfaces;
 using Domain.Entities;
-using Infrastructure.Interfaces;
+using Domain.Interfaces;
 using TrackableEntities.Common.Core;
 
 namespace Application.Services;

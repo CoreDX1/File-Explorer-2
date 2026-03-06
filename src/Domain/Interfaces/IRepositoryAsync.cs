@@ -1,6 +1,6 @@
 using TrackableEntities.Common.Core;
 
-namespace Infrastructure.Interfaces;
+namespace Domain.Interfaces;
 
 public interface IRepositoryAsync<TEntity> : IRepository<TEntity>
     where TEntity : class, ITrackable

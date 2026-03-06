@@ -1,7 +1,6 @@
-using System.Collections.Immutable;
 using Domain.Entities;
+using Domain.Interfaces;
 using Infrastructure.Data;
-using Infrastructure.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using TrackableEntities.Common.Core;
 

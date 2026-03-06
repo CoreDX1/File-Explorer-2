@@ -1,6 +1,4 @@
-using TrackableEntities.Common.Core;
-
-namespace Infrastructure.Interfaces;
+namespace Domain.Interfaces;
 
 public interface IUnitOfWorkAsync : IUnitOfWork
 {

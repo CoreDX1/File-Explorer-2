@@ -33,8 +33,8 @@ public class User : Entity
     }
 }
 
-public class LockoutOptions
-{
-    public int MaxFailedAccessAttempts { get; set; }
-    public TimeSpan DefaultLockoutTimeSpan { get; set; }
-}
+// public class LockoutOptions
+// {
+//     public int MaxFailedAccessAttempts { get; set; }
+//     public TimeSpan DefaultLockoutTimeSpan { get; set; }
+// }

@@ -1,14 +1,15 @@
+using Application.Configuration;
 using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interfaces;
 using Application.Mappings;
 using Domain.Entities;
+using Domain.Interfaces;
 using Domain.Monads;
 using Domain.Monads.Result;
 using Domain.ValueObjects;
 using FluentValidation;
 using FluentValidation.Results;
-using Infrastructure.Interfaces;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -40,7 +41,7 @@ public class UserServices : Service<User>, IUserServices
         _unitOfwork = unitOfwork;
         _validator = validator;
         _logger = logger;
-        _lockoutOptions = lockoutOptions;
+        _lockoutOptions = lockoutOptions ?? throw new ArgumentNullException(nameof(lockoutOptions));
     }
 
     public async Task<ApiResult<UserResponse>> FindByIdAsync(int id)
@@ -122,9 +123,11 @@ public class UserServices : Service<User>, IUserServices
         {
             user.FailedLoginAttemts++;
 
-            if (user.FailedLoginAttemts >= _lockoutOptions.Value.MaxFailedAccessAttempts)
+            var lockoutConfig = _lockoutOptions?.Value ?? new LockoutOptions();
+
+            if (user.FailedLoginAttemts >= lockoutConfig.MaxFailedAccessAttempts)
             {
-                user.LockoutEnd = DateTime.UtcNow.Add(_lockoutOptions.Value.DefaultLockoutTimeSpan);
+                user.LockoutEnd = DateTime.UtcNow.Add(lockoutConfig.LockoutTimeSpan);
                 _logger.LogWarning(
                     "User {Email} locked out until {LockoutEnd} after {Attempts} failed attempts",
                     email,
@@ -137,14 +140,14 @@ public class UserServices : Service<User>, IUserServices
 
                 // Usuario ya quedó bloqueado: informamos lockout con intento final
                 return ApiResult<LoginResponse>.Error(
-                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.Value.MaxFailedAccessAttempts}. Try again later.",
+                    $"Account locked due to too many failed attempts. Attempt {user.FailedLoginAttemts} of {lockoutConfig.MaxFailedAccessAttempts}. Try again later.",
                     403
                 );
             }
             else
             {
                 int remainingAttempts =
-                    _lockoutOptions.Value.MaxFailedAccessAttempts - user.FailedLoginAttemts;
+                    lockoutConfig.MaxFailedAccessAttempts - user.FailedLoginAttemts;
 
                 _logger.LogWarning(
                     "Authentication failed: Invalid password for {Email}. Failed attempts: {Attempts}, Remaining before lockout: {Remaining}",
@@ -158,7 +161,7 @@ public class UserServices : Service<User>, IUserServices
 
                 // Message includes current attempt and total allowed attempts
                 return ApiResult<LoginResponse>.Error(
-                    $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {_lockoutOptions.Value.MaxFailedAccessAttempts}.",
+                    $"Invalid credentials. Attempt {user.FailedLoginAttemts} of {lockoutConfig.MaxFailedAccessAttempts}.",
                     401
                 );
             }

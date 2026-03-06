@@ -10,41 +10,33 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Username",
-                table: "Users",
-                newName: "FirtName");
+            migrationBuilder.RenameColumn(name: "Username", table: "Users", newName: "FirtName");
 
             migrationBuilder.AddColumn<string>(
                 name: "LastName",
                 table: "Users",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: ""
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Phone",
                 table: "Users",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: ""
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "LastName",
-                table: "Users");
+            migrationBuilder.DropColumn(name: "LastName", table: "Users");
 
-            migrationBuilder.DropColumn(
-                name: "Phone",
-                table: "Users");
+            migrationBuilder.DropColumn(name: "Phone", table: "Users");
 
-            migrationBuilder.RenameColumn(
-                name: "FirtName",
-                table: "Users",
-                newName: "Username");
+            migrationBuilder.RenameColumn(name: "FirtName", table: "Users", newName: "Username");
         }
     }
 }

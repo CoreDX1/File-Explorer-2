@@ -1,7 +1,5 @@
 using System.Data;
-using Infrastructure.Data;
-using Infrastructure.Interfaces;
-using Infrastructure.Repositories;
+using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -11,16 +9,24 @@ public class UnitOfWork : IUnitOfWorkAsync, IDisposable
 {
     private readonly DbContext _context;
     private IDbContextTransaction? _transaction;
-    private IRefreshTokenRepository? _refreshTokenRepository;
+    private IRefreshTokenRepository _refreshTokenRepository;
+    private IUserRepository _userRepository;
+
     private bool _disposed;
 
-    public UnitOfWork(DbContext context)
+    public UnitOfWork(
+        DbContext context,
+        IRefreshTokenRepository refreshTokenRepository,
+        IUserRepository userRepository
+    )
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _context = context;
+        refreshTokenRepository = _refreshTokenRepository!;
+        userRepository = _userRepository!;
     }
 
-    public IRefreshTokenRepository RefreshTokenRepository =>
-        _refreshTokenRepository ??= new RefreshTokenRepository((FileExplorerDbContext)_context);
+    public IUserRepository UserRepository => _userRepository;
+    public IRefreshTokenRepository RefreshTokenRepository => _refreshTokenRepository;
 
     public int SaveChanges() => _context.SaveChanges();
 
