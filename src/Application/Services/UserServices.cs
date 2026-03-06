@@ -106,6 +106,13 @@ public class UserServices : Service<User>, IUserServices
 
         User user = maybeUser.GetValueOrThrow();
 
+        // Validate user has password hash
+        if (string.IsNullOrEmpty(user.PasswordHash))
+        {
+            _logger.LogError("User {Email} has no password hash set", email);
+            return ApiResult<LoginResponse>.Error("Invalid credentials", 401);
+        }
+
         // Check if user is currently locked out
         if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
         {
