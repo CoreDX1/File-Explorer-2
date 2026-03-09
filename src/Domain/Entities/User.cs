@@ -32,9 +32,3 @@ public class User : Entity
         UpdatedAt = DateTime.UtcNow;
     }
 }
-
-// public class LockoutOptions
-// {
-//     public int MaxFailedAccessAttempts { get; set; }
-//     public TimeSpan DefaultLockoutTimeSpan { get; set; }
-// }

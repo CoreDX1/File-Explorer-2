@@ -243,6 +243,7 @@ public class UserServices : Service<User>, IUserServices
     public async Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+
         try
         {
             _logger.LogInformation(
@@ -473,7 +474,7 @@ public class UserServices : Service<User>, IUserServices
 
     // Generador criptografico seguro
 
-    public string GenerateSecureRefreshToken()
+    public static string GenerateSecureRefreshToken()
     {
         using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
         var bytes = new byte[64];
