@@ -9,6 +9,7 @@ public class FileExplorerDbContext : DbContext
         : base(options) { }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<FileItem> FileItems { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,6 +28,26 @@ public class FileExplorerDbContext : DbContext
             entity.Property(e => e.LastLoginAt);
 
             entity.HasIndex(e => e.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<FileSystemItem>(entity =>
+        {
+            entity.ToTable("FileSystemItems");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Path).IsRequired().HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<FileItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.StorageFileName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Path).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Size).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ModifiedAt).IsRequired();
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>
