@@ -14,17 +14,20 @@ public interface IFolderServices
     Result<string> DeleteFolder(string path);
 
     // New async methods for FolderController
-    Task<FolderItem?> GetFolderByIdAsync(Guid id);
+    Task<FolderItemResponse?> GetFolderByIdAsync(Guid id);
     Task<FolderContentsResult> GetFolderContentsAsync(Guid id);
-    Task<FolderItem> CreateFolderAsync(CreateFolderRequest request);
+    Task<FolderItemResponse> CreateFolderAsync(CreateFolderRequest request);
     Task UpdateFolderAsync(Guid id, UpdateFolderRequest request);
     Task DeleteFolderAsync(Guid id);
     Task MoveFolderAsync(Guid id, Guid destinationFolderId);
 }
 
-public record FolderItem(Guid Id, string Name, Guid? ParentFolderId, DateTime CreatedAt);
+public record FolderItemResponse(Guid Id, string Name, Guid? ParentFolderId, DateTime CreatedAt);
 
-public record FolderContentsResult(ICollection<FolderItem> Folders, ICollection<FileItem> Files);
+public record FolderContentsResult(
+    ICollection<FolderItemResponse> Folders,
+    ICollection<FileItem> Files
+);
 
 public record CreateFolderRequest(string Name, Guid? ParentFolderId);
 
