@@ -1,7 +1,7 @@
 namespace Application.Services;
 
 using System;
-using System.Security.Claims;
+// using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.Interfaces;
 using Ardalis.Result;
@@ -30,87 +30,98 @@ public class FolderServices : IFolderServices
             ?? @"C:\Users\christian\Desktop\Project\File-Explorer\CONTENEDOR";
     }
 
-    private int GetAuthenticatedUserId()
-    {
-        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(
-            ClaimTypes.NameIdentifier
-        );
-        return int.Parse(
-            userIdClaim?.Value ?? throw new UnauthorizedAccessException("User not authenticated"),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-    }
+    // private int GetAuthenticatedUserId()
+    // {
+    //     // var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(
+    //     //     ClaimTypes.NameIdentifier
+    //     // );
+    //     // return int.Parse(
+    //     //     userIdClaim?.Value ?? throw new UnauthorizedAccessException("User not authenticated"),
+    //     //     System.Globalization.CultureInfo.InvariantCulture
+    //     // );
+    //
+    //     throw new NotImplementedException();
+    // }
 
-    private string ResolveUserStoragePath()
-    {
-        var userId = GetAuthenticatedUserId();
-        var userStoragePath = Path.Combine(_containerPath, $"user_{userId}");
-        Directory.CreateDirectory(userStoragePath);
-        return userStoragePath;
-    }
+    // private string ResolveUserStoragePath()
+    // {
+    //     // var userId = GetAuthenticatedUserId();
+    //     // var userStoragePath = Path.Combine(_containerPath, $"user_{userId}");
+    //     // Directory.CreateDirectory(userStoragePath);
+    //     // return userStoragePath;
+    //
+    //     throw new NotImplementedException();
+    // }
 
     public Result<List<DirectoryItem>> GetSubFolders(string path)
     {
-        var userStoragePath = ResolveUserStoragePath();
-        var absolutePath = Path.Combine(userStoragePath, path);
-        var folders = _folderRepository.GetSubFolders(absolutePath);
-        return Result.Success(folders.ToList());
+        // var userStoragePath = ResolveUserStoragePath();
+        // var absolutePath = Path.Combine(userStoragePath, path);
+        // var folders = _folderRepository.GetSubFolders(absolutePath);
+        // return Result.Success(folders.ToList());
+
+        throw new NotImplementedException();
     }
 
     public Result<List<FileItem>> GetFiles(string path)
     {
-        var userStoragePath = ResolveUserStoragePath();
-        var absolutePath = Path.Combine(userStoragePath, path);
-        var files = _folderRepository.GetFiles(absolutePath);
-        return Result.Success(files.ToList());
+        // var userStoragePath = ResolveUserStoragePath();
+        // var absolutePath = Path.Combine(userStoragePath, path);
+        // var files = _folderRepository.GetFiles(absolutePath);
+        // return Result.Success(files.ToList());
+        throw new NotImplementedException();
     }
 
     public Result<string> ReadFile(string filePath)
     {
-        var userStoragePath = ResolveUserStoragePath();
-        var absoluteFilePath = Path.Combine(userStoragePath, filePath);
-        var fileContent = _folderRepository.ReadFile(absoluteFilePath);
-        return Result.Success(fileContent, "File read successfully.");
+        // var userStoragePath = ResolveUserStoragePath();
+        // var absoluteFilePath = Path.Combine(userStoragePath, filePath);
+        // var fileContent = _folderRepository.ReadFile(absoluteFilePath);
+        // return Result.Success(fileContent, "File read successfully.");
+        throw new NotImplementedException();
     }
 
     public Result<string> CreateFolder(string path)
     {
-        var userStoragePath = ResolveUserStoragePath();
-        var absoluteFolderPath = Path.Combine(userStoragePath, path);
-        var wasCreated = _folderRepository.CreateFolder(absoluteFolderPath);
-
-        if (!wasCreated)
-            return Result.NotFound("Directory could not be created.");
-
-        return Result.Success("Directory created successfully.");
+        // var userStoragePath = ResolveUserStoragePath();
+        // var absoluteFolderPath = Path.Combine(userStoragePath, path);
+        // var wasCreated = _folderRepository.CreateFolder(absoluteFolderPath);
+        //
+        // if (!wasCreated)
+        //     return Result.NotFound("Directory could not be created.");
+        //
+        // return Result.Success("Directory created successfully.");
+        throw new NotImplementedException();
     }
 
     public Result<string> RenameFolder(string oldPath, string newPath)
     {
-        var userStoragePath = ResolveUserStoragePath();
-        var absoluteOldPath = Path.Combine(userStoragePath, oldPath);
-        var absoluteNewPath = Path.Combine(userStoragePath, newPath);
-        var wasRenamed = _folderRepository.RenameFolder(absoluteOldPath, absoluteNewPath);
-
-        if (!wasRenamed)
-            return Result.NotFound("Directory could not be renamed.");
-
-        return Result.Success("Directory renamed successfully.");
+        // var userStoragePath = ResolveUserStoragePath();
+        // var absoluteOldPath = Path.Combine(userStoragePath, oldPath);
+        // var absoluteNewPath = Path.Combine(userStoragePath, newPath);
+        // var wasRenamed = _folderRepository.RenameFolder(absoluteOldPath, absoluteNewPath);
+        //
+        // if (!wasRenamed)
+        //     return Result.NotFound("Directory could not be renamed.");
+        //
+        // return Result.Success("Directory renamed successfully.");
+        throw new NotImplementedException();
     }
 
     public Result<string> DeleteFolder(string path)
     {
-        var userStoragePath = ResolveUserStoragePath();
-        var absoluteFolderPath = Path.Combine(userStoragePath, path);
-        var wasDeleted = _folderRepository.DeleteFolder(absoluteFolderPath);
-
-        if (!wasDeleted)
-            return Result.NotFound("Directory could not be deleted.");
-
-        return Result.Success("Directory deleted successfully.");
+        // var userStoragePath = ResolveUserStoragePath();
+        // var absoluteFolderPath = Path.Combine(userStoragePath, path);
+        // var wasDeleted = _folderRepository.DeleteFolder(absoluteFolderPath);
+        //
+        // if (!wasDeleted)
+        //     return Result.NotFound("Directory could not be deleted.");
+        //
+        // return Result.Success("Directory deleted successfully.");
+        throw new NotImplementedException();
     }
 
-    public Task<FolderItem?> GetFolderByIdAsync(Guid id)
+    public Task<FolderItemResponse?> GetFolderByIdAsync(Guid id)
     {
         throw new NotImplementedException();
     }
@@ -120,25 +131,26 @@ public class FolderServices : IFolderServices
         throw new NotImplementedException();
     }
 
-    public Task<FolderItem> CreateFolderAsync(CreateFolderRequest request)
+    public Task<FolderItemResponse> CreateFolderAsync(CreateFolderRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        var userStoragePath = ResolveUserStoragePath();
-        var folderPath = Path.Combine(userStoragePath, request.Name);
-
-        var wasCreated = _folderRepository.CreateFolder(folderPath);
-
-        if (!wasCreated)
-            throw new InvalidOperationException("Directory could not be created");
-
-        var folderItem = new FolderItem(
-            Guid.NewGuid(),
-            request.Name,
-            request.ParentFolderId,
-            DateTime.UtcNow
-        );
-
-        return Task.FromResult(folderItem);
+        // ArgumentNullException.ThrowIfNull(request);
+        // var userStoragePath = ResolveUserStoragePath();
+        // var folderPath = Path.Combine(userStoragePath, request.Name);
+        //
+        // var wasCreated = _folderRepository.CreateFolder(folderPath);
+        //
+        // if (!wasCreated)
+        //     throw new InvalidOperationException("Directory could not be created");
+        //
+        // var folderItem = new FolderItem(
+        //     Guid.NewGuid(),
+        //     request.Name,
+        //     request.ParentFolderId,
+        //     DateTime.UtcNow
+        // );
+        //
+        // return Task.FromResult(folderItem);
+        throw new NotImplementedException();
     }
 
     public Task UpdateFolderAsync(Guid id, UpdateFolderRequest request)
