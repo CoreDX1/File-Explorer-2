@@ -11,6 +11,12 @@ public abstract class FileSystemItem
     public bool IsDirectory { get; protected set; }
     public FileSystemItemType ItemType { get; protected set; }
 
+    public int? ParentFolderId { get; set; }
+
+    public virtual FolderItem? ParentFolder { get; set; }
+
+    public virtual ICollection<FileSystemItem>? Children { get; set; }
+
     protected FileSystemItem(
         string name,
         string path,
