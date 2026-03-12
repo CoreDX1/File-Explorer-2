@@ -1,7 +1,7 @@
 namespace Application.DTOs.Response;
 
 public sealed record UserResponse(
-    int Id,
+    Guid Id,
     string FirstName,
     string LastName,
     string Email,
