@@ -11,7 +11,7 @@ public class RefreshTokenRepository : Repository<RefreshToken>, IRefreshTokenRep
     public RefreshTokenRepository(FileExplorerDbContext context)
         : base(context) { }
 
-    public async Task<RefreshToken?> GetActiveAsync(int userId)
+    public async Task<RefreshToken?> GetActiveAsync(Guid userId)
     {
         return await Queryable()
             .Where(rt => rt.UserId == userId && rt.IsActive)
@@ -19,7 +19,7 @@ public class RefreshTokenRepository : Repository<RefreshToken>, IRefreshTokenRep
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<RefreshToken>> GetUserTokensAsync(int userId)
+    public async Task<List<RefreshToken>> GetUserTokensAsync(Guid userId)
     {
         return await Queryable()
             .Where(rt => rt.UserId == userId)

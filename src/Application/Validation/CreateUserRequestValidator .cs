@@ -48,8 +48,6 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
             .WithMessage("Password must contain at least one special character (@$!%*?&#)");
 
         RuleFor(x => x.Phone)
-            .NotEmpty()
-            .WithMessage("Phone is required")
             .Matches(@"^\+?[1-9]\d{1,14}$")
             .WithMessage("Invalid phone format (use international format)")
             .MaximumLength(15)

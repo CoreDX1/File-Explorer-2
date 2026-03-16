@@ -6,7 +6,7 @@ namespace Infrastructure.Repositories;
 
 public class FolderRepository : IFolderRepository
 {
-    private string FullPath = "/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR";
+    private readonly string FullPath = "/home/christian/Desktop/Projects/File-Explorer/CONTENEDOR";
 
     public ICollection<DirectoryItem> GetSubFolders(string path)
     {
@@ -95,12 +95,14 @@ public class FolderRepository : IFolderRepository
 
     public bool CreateFolder(string path)
     {
-        string fullPath = Path.Combine(FullPath, path);
+        // string fullPath = Path.Combine(FullPath, path);
+        //
+        // if (Directory.Exists(fullPath))
+        //     return false;
+        //
+        // Directory.CreateDirectory(fullPath);
+        // return true;
 
-        if (Directory.Exists(fullPath))
-            return false;
-
-        Directory.CreateDirectory(fullPath);
         return true;
     }
 }

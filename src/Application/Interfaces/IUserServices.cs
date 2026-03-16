@@ -19,7 +19,7 @@ public interface IUserServices : IService<User>
     // Authentication methods
     Task<ApiResult<LoginResponse>> AuthenticateUserAsync(string email, string password);
     Task<ApiResult<LoginResponse>> RegisterUserAsync(CreateUserRequest request);
-    Task<ApiResult<LoginResponse>> RefreshAuthenticationAsync(string refreshToken, int userId);
+    Task<ApiResult<LoginResponse>> RefreshAuthenticationAsync(string refreshToken, Guid userId);
     Task RevokeAuthenticationAsync(string refreshToken);
     Task<ApiResult<object>> AuthenticateWithGoogleAsync(string idToken);
 

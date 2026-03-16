@@ -9,8 +9,8 @@ public class UnitOfWork : IUnitOfWorkAsync, IDisposable
 {
     private readonly DbContext _context;
     private IDbContextTransaction? _transaction;
-    private IRefreshTokenRepository _refreshTokenRepository;
-    private IUserRepository _userRepository;
+    private IRefreshTokenRepository _refreshTokenRepository = null!;
+    private IUserRepository _userRepository = null!;
 
     private bool _disposed;
 
@@ -21,8 +21,8 @@ public class UnitOfWork : IUnitOfWorkAsync, IDisposable
     )
     {
         _context = context;
-        refreshTokenRepository = _refreshTokenRepository!;
-        userRepository = _userRepository!;
+        _refreshTokenRepository = refreshTokenRepository;
+        _userRepository = userRepository;
     }
 
     public IUserRepository UserRepository => _userRepository;

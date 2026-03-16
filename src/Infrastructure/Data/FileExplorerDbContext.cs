@@ -14,6 +14,7 @@ public class FileExplorerDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<FileSystemItem> FileSystemItems { get; set; }
 
+    // Fluent
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(entity =>

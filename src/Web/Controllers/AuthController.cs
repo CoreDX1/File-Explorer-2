@@ -138,7 +138,7 @@ public class AuthController : ControllerBase
     }
 }
 
-public record RefreshTokenRequest(string RefreshToken, int Id);
+public record RefreshTokenRequest(string RefreshToken, Guid Id);
 
 public record LogoutRequest(string RefreshToken);
 

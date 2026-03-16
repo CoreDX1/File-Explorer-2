@@ -2,7 +2,7 @@ namespace Domain.Entities;
 
 public abstract class FileSystemItem
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
     public long Size { get; set; }
@@ -11,7 +11,7 @@ public abstract class FileSystemItem
     public bool IsDirectory { get; protected set; }
     public FileSystemItemType ItemType { get; protected set; }
 
-    public int? ParentFolderId { get; set; }
+    public Guid? ParentFolderId { get; set; }
 
     public virtual FolderItem? ParentFolder { get; set; }
 

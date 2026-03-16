@@ -9,7 +9,7 @@ namespace Application.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateToken(string userId, string email, string role = "User");
+    string GenerateToken(Guid userId, string email, string role = "User");
     ClaimsPrincipal? ValidateToken(string token);
 }
 
@@ -29,14 +29,14 @@ public class JwtTokenService : IJwtTokenService
             throw new ArgumentException("JWT SecretKey must be at least 32 characters long");
     }
 
-    public string GenerateToken(string userId, string email, string role = "User")
+    public string GenerateToken(Guid userId, string email, string role = "User")
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Role, role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),

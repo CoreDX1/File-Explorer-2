@@ -180,11 +180,7 @@ public class UserServices : Service<User>, IUserServices
         user.LastLoginAt = DateTime.UtcNow;
 
         // 1. Generar Access Token
-        string accessToken = _jwtTokenService.GenerateToken(
-            user.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            user.Email,
-            "User"
-        );
+        string accessToken = _jwtTokenService.GenerateToken(user.Id, user.Email, "User");
 
         // 2. Generar Refresh Token
         string refreshTokenValue = GenerateSecureRefreshToken();
@@ -194,7 +190,6 @@ public class UserServices : Service<User>, IUserServices
         var newRefreshToken = new RefreshToken
         {
             UserId = user.Id,
-            Token = refreshTokenValue,
             Expire = DateTime.UtcNow.AddDays(7), // Duración larga (ej. 7 días)
             Created = DateTime.UtcNow,
             Revoked = null,
@@ -282,6 +277,7 @@ public class UserServices : Service<User>, IUserServices
 
             // 3. Create user entity
             User userToCreate = request.Adapt<User>();
+            userToCreate.Id = Guid.NewGuid();
             userToCreate.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             userToCreate.CreatedAt = DateTime.UtcNow;
@@ -294,7 +290,7 @@ public class UserServices : Service<User>, IUserServices
 
             // 6. Generate JWT token for automatic login
             string accessToken = _jwtTokenService.GenerateToken(
-                userToCreate.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                userToCreate.Id,
                 userToCreate.Email,
                 "User"
             );
@@ -346,7 +342,7 @@ public class UserServices : Service<User>, IUserServices
     // TODO: Implementar la lógica para refrescar la autenticación
     public async Task<ApiResult<LoginResponse>> RefreshAuthenticationAsync(
         string refreshToken,
-        int userId
+        Guid userId
     )
     {
         _logger.LogInformation(
@@ -416,11 +412,7 @@ public class UserServices : Service<User>, IUserServices
                     throw new Exception("Usuario no encontrado durante refresh");
             }
 
-            string newAccessToken = _jwtTokenService.GenerateToken(
-                user.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                user.Email,
-                "User"
-            );
+            string newAccessToken = _jwtTokenService.GenerateToken(user.Id, user.Email, "User");
 
             // --- PASO D: Persistir cambios ---
             await _unitOfwork.SaveChangesAsync();
@@ -459,7 +451,7 @@ public class UserServices : Service<User>, IUserServices
     }
 
     public async Task<Maybe<RefreshToken>> FindRefreshTokenActiveAsync(
-        int userId,
+        Guid userId,
         string tokenValue
     )
     {

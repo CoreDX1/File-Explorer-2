@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.src.Infrastructure.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(FileExplorerDbContext))]
-    [Migration("20260311191717_Migrations")]
-    partial class Migrations
+    [Migration("20260311220150_UpdateUserEntity")]
+    partial class UpdateUserEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -22,15 +22,15 @@ namespace Infrastructure.src.Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.FileSystemItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("FileItemId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("FileItemId")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDirectory")
                         .HasColumnType("INTEGER");
@@ -46,8 +46,8 @@ namespace Infrastructure.src.Infrastructure.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ParentFolderId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Path")
                         .IsRequired()
@@ -94,8 +94,8 @@ namespace Infrastructure.src.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -109,9 +109,9 @@ namespace Infrastructure.src.Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -153,7 +153,6 @@ namespace Infrastructure.src.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("StorageQuotaBytes")
