@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(FileExplorerDbContext))]
-    partial class FileExplorerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405022216_FixTPHInheritance")]
+    partial class FixTPHInheritance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -24,6 +27,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("FileItemId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDirectory")
@@ -52,6 +58,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FileItemId");
 
                     b.HasIndex("ParentFolderId");
 
@@ -189,6 +197,10 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.FileSystemItem", b =>
                 {
+                    b.HasOne("Domain.Entities.FileItem", null)
+                        .WithMany("Children")
+                        .HasForeignKey("FileItemId");
+
                     b.HasOne("Domain.Entities.FolderItem", "ParentFolder")
                         .WithMany("Children")
                         .HasForeignKey("ParentFolderId")
@@ -206,6 +218,11 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FileItem", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("Domain.Entities.FolderItem", b =>

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using Application.Helpers;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -8,12 +8,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
-public class FileServices : IFileServices
+public class FileServices : BaseService, IFileServices
 {
     private readonly IFileRepository _fileRepository;
     private readonly ILogger<FileServices> _logger;
-    private readonly string _basePath;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public FileServices(
         IFileRepository fileRepository,
@@ -21,40 +19,10 @@ public class FileServices : IFileServices
         IConfiguration configuration,
         IHttpContextAccessor httpContextAccessor
     )
+        : base(httpContextAccessor, PathHelper.ResolveBasePath(configuration))
     {
         _fileRepository = fileRepository;
         _logger = logger;
-        var configPath = configuration["FileStorage:ContainerPath"] ?? "CONTENEDOR";
-        // Resolve relative path to absolute path from working directory
-        _basePath = Path.IsPathRooted(configPath)
-            ? configPath
-            : Path.Combine(Directory.GetCurrentDirectory(), "..", "..", configPath);
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    private Guid GetUserId()
-    {
-        var userIdClaim = _httpContextAccessor
-            .HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
-            ?.Value;
-        if (string.IsNullOrEmpty(userIdClaim))
-        {
-            throw new UnauthorizedAccessException("User not authenticated");
-        }
-        return Guid.Parse(userIdClaim);
-    }
-
-    private string GetUserFolderPath()
-    {
-        var userId = GetUserId();
-        var userFolderPath = Path.Combine(_basePath, userId.ToString());
-
-        if (!Directory.Exists(userFolderPath))
-        {
-            Directory.CreateDirectory(userFolderPath);
-        }
-
-        return userFolderPath;
     }
 
     public async Task<bool> CreateFileAsync(CreateFileRequest createFile)

@@ -48,33 +48,28 @@ public class FileExplorerDbContext : DbContext
 
             entity.Property(e => e.ParentFolderId).IsRequired(false);
 
-            // Relacion recursiva: Padre hijo
-            entity
-                .HasOne(e => e.ParentFolder)
-                .WithMany(e => e.Children)
-                .HasForeignKey(e => e.ParentFolderId)
-                .OnDelete(DeleteBehavior.SetNull);
-
             entity.HasIndex(e => e.ParentFolderId);
+
+            // TPH Inheritance with discriminator
+            entity
+                .HasDiscriminator<FileSystemItemType>("ItemType")
+                .HasValue<FileItem>(FileSystemItemType.File)
+                .HasValue<FolderItem>(FileSystemItemType.Directory);
         });
 
         modelBuilder.Entity<FileItem>(entity =>
         {
-            entity.ToTable("FileItem");
-            // entity.HasKey(e => e.Id);
-
             entity.Property(e => e.StorageFileName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.ContentType).HasMaxLength(100);
-            entity.HasOne<FileSystemItem>().WithOne().HasForeignKey<FileItem>(e => e.Id);
         });
 
         modelBuilder.Entity<FolderItem>(entity =>
         {
-            entity.ToTable("FolderItems");
-            // entity.HasKey(e => e.Id);
-
-            // Relación 1:1 con la tabla base
-            entity.HasOne<FileSystemItem>().WithOne().HasForeignKey<FolderItem>(e => e.Id);
+            entity
+                .HasMany(e => e.Children)
+                .WithOne(e => e.ParentFolder)
+                .HasForeignKey(e => e.ParentFolderId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>

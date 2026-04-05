@@ -15,8 +15,6 @@ public abstract class FileSystemItem
 
     public virtual FolderItem? ParentFolder { get; set; }
 
-    public virtual ICollection<FileSystemItem>? Children { get; set; }
-
     protected FileSystemItem(
         string name,
         string path,

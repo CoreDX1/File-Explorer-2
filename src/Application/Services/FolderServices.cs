@@ -1,8 +1,8 @@
 namespace Application.Services;
 
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
+using Application.Helpers;
 using Application.Interfaces;
 using Ardalis.Result;
 using Domain.Entities;
@@ -11,13 +11,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-public class FolderServices : IFolderServices
+public class FolderServices : BaseService, IFolderServices
 {
     private readonly IFolderRepository _folderRepository;
     private readonly IFileRepository _fileRepository;
     private readonly ILogger<FolderServices> _logger;
-    private readonly string _containerPath;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public FolderServices(
         IFolderRepository folderRepository,
@@ -26,46 +24,15 @@ public class FolderServices : IFolderServices
         ILogger<FolderServices> logger,
         IHttpContextAccessor httpContextAccessor
     )
+        : base(httpContextAccessor, PathHelper.ResolveBasePath(configuration))
     {
         ArgumentNullException.ThrowIfNull(configuration);
         _folderRepository = folderRepository;
         _fileRepository = fileRepository;
         _logger = logger;
-        var configPath = configuration["FileStorage:ContainerPath"] ?? "CONTENEDOR";
-        // Resolve relative path to absolute path from working directory
-        _containerPath = Path.IsPathRooted(configPath)
-            ? configPath
-            : Path.Combine(Directory.GetCurrentDirectory(), "..", "..", configPath);
-        _httpContextAccessor = httpContextAccessor;
     }
 
-    private Guid GetUserId()
-    {
-        var userIdClaim = _httpContextAccessor
-            .HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
-            ?.Value;
-        if (string.IsNullOrEmpty(userIdClaim))
-        {
-            throw new UnauthorizedAccessException("User not authenticated");
-        }
-        return Guid.Parse(userIdClaim);
-    }
-
-    private string GetUserFolderPath()
-    {
-        var userId = GetUserId();
-        var userFolderPath = Path.Combine(_containerPath, userId.ToString());
-
-        // Create user folder if it doesn't exist
-        if (!Directory.Exists(userFolderPath))
-        {
-            Directory.CreateDirectory(userFolderPath);
-        }
-
-        return userFolderPath;
-    }
-
-    public Result<List<DirectoryItem>> GetSubFolders(string path)
+    public Result<List<FolderItem>> GetSubFolders(string path)
     {
         try
         {
@@ -76,12 +43,12 @@ public class FolderServices : IFolderServices
         catch (ArgumentException ex)
         {
             _logger.LogWarning(ex, "Failed to get subfolders for path: {Path}", path);
-            return Result<List<DirectoryItem>>.NotFound(ex.Message);
+            return Result<List<FolderItem>>.NotFound(ex.Message);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting subfolders for path: {Path}", path);
-            return Result<List<DirectoryItem>>.Error(
+            return Result<List<FolderItem>>.Error(
                 new ErrorList(new[] { "An error occurred while retrieving folders" }, null)
             );
         }
@@ -242,8 +209,33 @@ public class FolderServices : IFolderServices
         var userFolderPath = GetUserFolderPath();
         var folderId = Guid.NewGuid();
 
-        // Build physical path: CONTENEDOR/{userId}/{folderName}
-        var physicalFolderPath = Path.Combine(userFolderPath, request.Name);
+        // Build physical path based on parent folder
+        string physicalFolderPath;
+
+        if (request.ParentFolderId.HasValue && request.ParentFolderId.Value != Guid.Empty)
+        {
+            // Get parent folder to build nested path
+            var parentFolder = await _folderRepository.GetByIdAsync(request.ParentFolderId.Value);
+
+            if (parentFolder == null)
+            {
+                _logger.LogWarning(
+                    "Parent folder not found with ID: {ParentFolderId}",
+                    request.ParentFolderId
+                );
+                throw new KeyNotFoundException(
+                    $"Parent folder with ID {request.ParentFolderId} not found"
+                );
+            }
+
+            // Build path as subdirectory of parent: CONTENEDOR/{userId}/.../parent/{folderName}
+            physicalFolderPath = Path.Combine(parentFolder.Path, request.Name);
+        }
+        else
+        {
+            // Root level folder: CONTENEDOR/{userId}/{folderName}
+            physicalFolderPath = Path.Combine(userFolderPath, request.Name);
+        }
 
         var folderItem = new FolderItem(
             request.Name,
@@ -260,10 +252,11 @@ public class FolderServices : IFolderServices
         await _folderRepository.CreateAsync(folderItem);
 
         _logger.LogInformation(
-            "Folder created for user {UserId}: {Name} with ID: {Id}",
+            "Folder created for user {UserId}: {Name} with ID: {Id} at path: {Path}",
             userId,
             request.Name,
-            folderId
+            folderId,
+            physicalFolderPath
         );
 
         return new FolderItemResponse(

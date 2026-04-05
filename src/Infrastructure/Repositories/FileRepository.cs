@@ -1,3 +1,4 @@
+using Application.Helpers;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -14,17 +15,13 @@ public class FileRepository : IFileRepository
     public FileRepository(FileExplorerDbContext context, IConfiguration configuration)
     {
         _context = context;
-        var configPath = configuration["FileStorage:ContainerPath"] ?? "CONTENEDOR";
-        _basePath = Path.IsPathRooted(configPath)
-            ? configPath
-            : Path.Combine(Directory.GetCurrentDirectory(), "..", "..", configPath);
+        _basePath = PathHelper.ResolveBasePath(configuration);
     }
 
     // File system operations
     public ICollection<FileItem> GetFilesAsync(string path)
     {
-        // If path is already absolute, use it directly; otherwise combine with basePath
-        string fullPath = Path.IsPathRooted(path) ? path : Path.Combine(_basePath, path);
+        string fullPath = PathHelper.ResolveFullPath(_basePath, path);
 
         if (!Directory.Exists(fullPath))
             throw new ArgumentException($"The directory does not exist: {fullPath}");

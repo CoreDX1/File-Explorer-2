@@ -5,7 +5,7 @@ namespace Application.Interfaces;
 
 public interface IFolderServices
 {
-    Result<List<DirectoryItem>> GetSubFolders(string path);
+    Result<List<FolderItem>> GetSubFolders(string path);
     Result<List<FileItem>> GetFiles(string path);
     Result<string> ReadFile(string filePath);
 

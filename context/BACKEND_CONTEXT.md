@@ -7,6 +7,7 @@
 - **Frontend:** Angular 19
 - **Base de Datos:** SQLite
 - **Arquitectura:** Clean Architecture (4 capas)
+- **Almacenamiento:** CONTENEDOR/{userId}/ (aislamiento por usuario)
 
 ---
 
@@ -259,12 +260,23 @@ Logs guardados en: `src/Web/logs/log-YYYYMMDD.txt`
 
 ## 🎯 Roadmap Pendiente
 
-- [ ] Token Refresh ininterrumpido
 - [ ] Google OAuth (SSO)
-- [ ] Búsqueda avanzada con filtros
 - [ ] RBAC granular
 - [ ] Enlaces públicos con expiración
 - [ ] Auditoría completa de operaciones
+- [ ] Tests de integración
+
+## ✅ Funcionalidades Completadas
+
+- [x] Autenticación JWT con login/registro
+- [x] Refresh token con rotación
+- [x] Logout con revocación de tokens
+- [x] Reset de contraseña
+- [x] CRUD de archivos (upload, download, delete)
+- [x] CRUD de carpetas (create, update, delete, move)
+- [x] Búsqueda de archivos y carpetas
+- [x] Aislamiento de usuarios (CONTENEDOR/{userId}/)
+- [x] Frontend Angular conectado a APIs
 
 ---
 

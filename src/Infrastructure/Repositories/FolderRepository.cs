@@ -1,4 +1,5 @@
 // FileExplorer.Infrastructure/Repositories/FolderRepository.cs
+using Application.Helpers;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -15,27 +16,23 @@ public class FolderRepository : IFolderRepository
     public FolderRepository(FileExplorerDbContext context, IConfiguration configuration)
     {
         _context = context;
-        var configPath = configuration["FileStorage:ContainerPath"] ?? "CONTENEDOR";
-        _basePath = Path.IsPathRooted(configPath)
-            ? configPath
-            : Path.Combine(Directory.GetCurrentDirectory(), "..", "..", configPath);
+        _basePath = PathHelper.ResolveBasePath(configuration);
     }
 
     // File system operations
-    public ICollection<DirectoryItem> GetSubFolders(string path)
+    public ICollection<FolderItem> GetSubFolders(string path)
     {
-        // If path is already absolute, use it directly; otherwise combine with basePath
-        string fullPath = Path.IsPathRooted(path) ? path : Path.Combine(_basePath, path);
+        string fullPath = PathHelper.ResolveFullPath(_basePath, path);
 
         if (!Directory.Exists(fullPath))
             throw new ArgumentException($"Directory does not exist: {fullPath}");
 
-        var subFolders = new List<DirectoryItem>();
+        var subFolders = new List<FolderItem>();
 
         foreach (var dir in Directory.GetDirectories(fullPath))
         {
             subFolders.Add(
-                new DirectoryItem(
+                new FolderItem(
                     name: Path.GetFileName(dir),
                     path: dir,
                     size: new DirectoryInfo(dir).EnumerateFiles().Sum(file => file.Length),
@@ -50,8 +47,7 @@ public class FolderRepository : IFolderRepository
 
     public ICollection<FileItem> GetFiles(string path)
     {
-        // If path is already absolute, use it directly; otherwise combine with basePath
-        string fullPath = Path.IsPathRooted(path) ? path : Path.Combine(_basePath, path);
+        string fullPath = PathHelper.ResolveFullPath(_basePath, path);
 
         if (!Directory.Exists(fullPath))
             throw new ArgumentException($"Directory does not exist: {fullPath}");
@@ -148,6 +144,19 @@ public class FolderRepository : IFolderRepository
             Directory.CreateDirectory(fullPath);
         }
 
+        // If ParentFolderId is set, ensure the parent folder is tracked
+        if (folderItem.ParentFolderId.HasValue && folderItem.ParentFolderId.Value != Guid.Empty)
+        {
+            var parentFolder = await _context.FolderItems.FindAsync(
+                folderItem.ParentFolderId.Value
+            );
+            if (parentFolder != null)
+            {
+                folderItem.ParentFolder = parentFolder;
+            }
+        }
+
+        // Add to FolderItems (which inherits from FileSystemItem via TPH)
         _context.FolderItems.Add(folderItem);
         await _context.SaveChangesAsync();
         return folderItem;
