@@ -167,10 +167,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors(AllowOrigins); // Must be before UseAuthentication and UseAuthorization
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseCors(AllowOrigins); // Asegúrate de llamarlo antes de MapControllers
 
 app.UseRateLimiter();
 app.MapControllers();

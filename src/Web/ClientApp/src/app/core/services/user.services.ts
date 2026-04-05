@@ -2,6 +2,14 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 
+export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -11,12 +19,17 @@ export class UserServices {
   constructor(private http: HttpClient) {}
 
   login(credential: LoginRequest): Observable<Response<LoginResponse>> {
-    {
-      return this.http.post<Response<LoginResponse>>(
-        `${this.url}/auth/login`,
-        credential,
-      );
-    }
+    return this.http.post<Response<LoginResponse>>(
+      `${this.url}/auth/login`,
+      credential,
+    );
+  }
+
+  register(request: RegisterRequest): Observable<Response<LoginResponse>> {
+    return this.http.post<Response<LoginResponse>>(
+      `${this.url}/auth/register`,
+      request,
+    );
   }
 }
 
@@ -60,7 +73,8 @@ export interface LoginResponse {
   firstName: string;
   lastName: string;
   phone: string;
-  token: string;
+  accessToken: string;
+  refreshToken?: string;
 }
 
 interface LoginRequest {

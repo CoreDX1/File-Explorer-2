@@ -27,8 +27,14 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWorkAsync, UnitOfWork>();
 
         // Repository registration (optional if using Unit of Work)
-        services.AddScoped<IFileRepository, FileRepository>();
-        services.AddScoped<IFolderRepository, FolderRepository>();
+        services.AddScoped<IFileRepository>(sp => new FileRepository(
+            sp.GetRequiredService<FileExplorerDbContext>(),
+            sp.GetRequiredService<IConfiguration>()
+        ));
+        services.AddScoped<IFolderRepository>(sp => new FolderRepository(
+            sp.GetRequiredService<FileExplorerDbContext>(),
+            sp.GetRequiredService<IConfiguration>()
+        ));
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 

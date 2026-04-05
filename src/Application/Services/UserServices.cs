@@ -12,6 +12,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TrackableEntities.Common.Core;
@@ -26,6 +27,7 @@ public class UserServices : Service<User>, IUserServices
     private readonly IUnitOfWorkAsync _unitOfwork;
     private readonly IValidator<CreateUserRequest> _validator;
     private readonly IOptions<LockoutOptions> _lockoutOptions;
+    private readonly IConfiguration _configuration;
 
     public UserServices(
         IRepositoryAsync<User> repository,
@@ -33,7 +35,8 @@ public class UserServices : Service<User>, IUserServices
         IUnitOfWorkAsync unitOfwork,
         IValidator<CreateUserRequest> validator,
         ILogger<UserServices> logger,
-        IOptions<LockoutOptions> lockoutOptions
+        IOptions<LockoutOptions> lockoutOptions,
+        IConfiguration configuration
     )
         : base(repository)
     {
@@ -42,6 +45,7 @@ public class UserServices : Service<User>, IUserServices
         _validator = validator;
         _logger = logger;
         _lockoutOptions = lockoutOptions ?? throw new ArgumentNullException(nameof(lockoutOptions));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     public async Task<ApiResult<UserResponse>> FindByIdAsync(int id)
@@ -284,6 +288,18 @@ public class UserServices : Service<User>, IUserServices
             userToCreate.UpdatedAt = DateTime.UtcNow;
             userToCreate.IsActive = false;
 
+            // 4. Create user folder in CONTENEDOR
+            var configPath = _configuration["FileStorage:ContainerPath"] ?? "CONTENEDOR";
+            var containerPath = Path.IsPathRooted(configPath)
+                ? configPath
+                : Path.Combine(Directory.GetCurrentDirectory(), "..", "..", configPath);
+            var userFolderPath = Path.Combine(containerPath, userToCreate.Id.ToString());
+            if (!Directory.Exists(userFolderPath))
+            {
+                Directory.CreateDirectory(userFolderPath);
+                _logger.LogInformation("Created user folder: {Path}", userFolderPath);
+            }
+
             // 5. Persist to database
             Insert(userToCreate);
             await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
@@ -474,10 +490,29 @@ public class UserServices : Service<User>, IUserServices
         return Convert.ToBase64String(bytes);
     }
 
-    // TODO: Implementar la lógica para revocar la autenticación
-    public Task RevokeAuthenticationAsync(string refreshToken)
+    public async Task RevokeAuthenticationAsync(string refreshToken)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Token revocation attempt for refresh token");
+
+        var token = await _unitOfwork
+            .RefreshTokenRepository.Queryable()
+            .Where(rt => rt.Token == refreshToken && rt.IsActive)
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        if (token != null)
+        {
+            token.Revoked = DateTime.UtcNow;
+            token.ReasonRevoked = "Revoked by user logout";
+            token.TrackingState = TrackingState.Modified;
+            _unitOfwork.RefreshTokenRepository.UpdateAsync(token);
+            await _unitOfwork.SaveChangesAsync().ConfigureAwait(false);
+            _logger.LogInformation("Refresh token revoked successfully");
+        }
+        else
+        {
+            _logger.LogWarning("Token revocation attempt with invalid token");
+        }
     }
 
     // TODO: Crear la lógica para autenticar con Google
